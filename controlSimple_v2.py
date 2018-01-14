@@ -1,3 +1,5 @@
+# Send received data to Logging Queue and compute the control inputs using a PD controller for following a leader trajectory.
+# Zachary Lippay
 import time
 import logging
 from rigidBodyState import *
