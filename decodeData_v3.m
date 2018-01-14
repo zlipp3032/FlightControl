@@ -1,3 +1,6 @@
+% This function is an example used to decode th ASCII data sent to the network (primary function is to compare recevied data to actaul decoded data).
+% Zachary Lippay
+
 function [delq,delp] = decodeData_v3(x,y,z,d)
 
 reso = d/126; %(cm) Resolution of the data sent
