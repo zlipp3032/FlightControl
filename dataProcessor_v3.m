@@ -1,3 +1,6 @@
+% This function is used to pull the data obtained on the microcomputer and process this and put into appropriate assignments
+% Zachary Lippay
+
 function [xData,yData,zData,vxData,vyData,vzData,relTime,scaleTime,uData] = dataProcessor_v3(data)
 % data = '/Users/zlipp3032/Documents/MastersThesisUAS/Code/ComTests/Control/junk/2018_01_12__23_10_12_log.csv';
 
