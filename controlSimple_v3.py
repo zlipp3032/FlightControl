@@ -1,3 +1,6 @@
+# This is the controller class that will be used to compute the control values, override the channels and send data to the logging queue.
+# Zachary Lippay
+#
 from dronekit import connect, VehicleMode, Vehicle
 import time
 import logging
