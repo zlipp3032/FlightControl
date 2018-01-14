@@ -71,7 +71,7 @@ d = 500; %(cm) Longest distance used for determining resolution of movement
 kp = 5; % Proportional Gain for PD controller
 kd = 0.9; % Derivative Gain for PD controller
 
-pause(3)
+pause(3) % Wait three seconds for dramatic effect
 
 for i = 1:length(TIME)
 
