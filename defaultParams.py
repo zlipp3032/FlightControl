@@ -1,3 +1,6 @@
+# Default parameters used in the entire flight program
+# Zachary Lippay
+
 from rigidBodyState import Parameter
 import time
 import numpy as np
