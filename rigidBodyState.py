@@ -1,3 +1,6 @@
+# This script allocates space for the variables (e.g. defines the variables) used in the flight program
+# Zachary Lippay
+
 from recordtype import recordtype
 
 Timeout = recordtype('Timeout',['localTimeoutTime','GCSLastRx',('peerLastRx',{})],default = None)
@@ -13,3 +16,4 @@ Parameter = recordtype('Parameter',['Ts','peerTimeout','expectedMAVs','kp','kd']
 RigidBodyState = recordtype('RigidBodyState', [('startTime', None),'ID','time','attitude',('position',Position()),('velocity',Velocity()),('heading',0.0),('command',Command()),('parameters',Parameter()),('timeout',Timeout()),('control',ComputeControl()),('leader',Leader())], default = None)
 
 Message = recordtype('Message', 'type,sendTime,content', default = None)
+
