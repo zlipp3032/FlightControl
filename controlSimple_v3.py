@@ -29,6 +29,7 @@ class Control(threading.Thread):
         self.startTime = startTime
         self.rigidBodyState.ID = 1#BE SURE TO UPDATE THIS WHEN IT COMES TIME FOR MULTIAGENT TESTING!!!!!
         self.rigidBodyState.parameters = defaultParams
+        self.rigidBodyState.lastGCSContact = -1
 
     def stop(self):
         self.stoprequest.set()
@@ -49,7 +50,13 @@ class Control(threading.Thread):
 #            self.getRigidBodyState()
             self.RigidBodies[self.rigidBodyState.ID] = self.rigidBodyState
 #            print self.rigidBodyState.leader
-            self.computeControl()
+            # Implement a failsafe to ensure the computer is recceving data from the computer before it computes the control
+            if(not self.rigidBodyState.isGPS):
+                self.checkGPS()
+            if(self.rigidBodyState.isGPS and True):
+                if(not self.checkAbort()):
+                    #self.takeOffSOLO()
+                    self.computeControl()
 #            self.pushStatetoTxQueue()
             self.pushStatetoLoggingQueue()
             time.sleep(self.rigidBodyState.parameters.Ts)
@@ -85,7 +92,51 @@ class Control(threading.Thread):
 #        print self.rigidBodyState.position
         self.rigidBodyState.time = datetime.now()
         self.counter+=1
+        self.rigidBodyState.channels = dict(zip(self.vehicle.channels.keys(),elf.vehicle.channels.values())) #Necessary to be able to erialize it
        # self.rigidBodyState.velocity = BackEuler()
+    def checkAbort(self):
+        if(self.checkTimeouts()):
+            self.rigidBodyState.abortReason = "Timeout"
+            self.rigdBodyState.RCLatch = True
+            self.rigidBodyState.isGPS = False
+            self.releaseControl()
+#            self.landRigidBodySOLO()
+            return True
+        #print "Flight Mode: " + str(self.vehicle.mode)
+#        if(not (self.vehicle.mode == ControlMode)):
+#            self.rigidBodyState.RCLatch = True
+#            self.rigidBodyState.isGPS = False
+#            self.releaseControl()
+#            self.landRigidBodySOLO()
+#            return True
+
+    def checkGPS(self):
+        #Check Timeouts
+        if(self.checkTimeouts()):
+            print "No GPS - Timeout"
+            self.rigidBodyState.RCLatch = True
+            return False
+        #Check configuration
+        if(not self.rigidBodyState.parameters.isComplete):
+           self.rigidBodyState.RCLatch = True
+           return False
+#        if(not (self.vehicle.mode == ControlMode)):
+#           print "Wont't Engage - control Mode"
+#           print "Current Mode: %s" % self.vehicle.mode
+#           self.rigidBodyState.RCLatach = True
+#           return False
+        self.rigidBodyState.RCLatch = True # Set the Latch
+        self.rigidBodyState.isGPS = True # GPS is being received
+        return True
+
+    # Check for a GPS timeout - If no GPS, control should not be engaged
+    def checkTimeouts(self):
+        didTimeout = False
+        if(datetime.now() - timedelta(seconds = self.lastGPSContact) < datetime.now() - timedelta(seconds = self.rigidBodyState.parameters.GPSTimeout)):
+            print "GPS Timeout"
+            self.rigidBodyState.timeout.GPSTimeoutTime = time.time()
+            didTimeout = True
+        return didTimeout
 
   #  def pushStatetoTxQueue(self):
   #      msg = Message()
@@ -104,6 +155,9 @@ class Control(threading.Thread):
         msg.content['RigidBodies'] = self.RigidBodies
 #        print msg.content
         self.logQueue.put(msg)
+
+    def takeOffSOLO(self):
+        
 
     def computeControl(self):
         self.rigidBodyState.control.ux = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.x - self.rigidBodyState.leader.qgx) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vx - self.rigidBodyState.leader.pgx)
