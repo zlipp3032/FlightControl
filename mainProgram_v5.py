@@ -1,3 +1,6 @@
+# Main Flight Program that does not initiate connection Pixhawk 2.0 Cube
+# Zachary Lippay
+
 from dronekit import connect, VehicleMode
 import sys
 import time
