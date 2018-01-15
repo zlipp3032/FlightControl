@@ -1,3 +1,6 @@
+# Receive class that catches the udp packet and decodes the data string using ASCII standards
+# Zachary Lippay
+
 import socket
 from rigidBodyState import *
 import collections
