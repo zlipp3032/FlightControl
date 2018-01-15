@@ -1,3 +1,6 @@
+# Main flight program - send commands to Pixhawk via connect method
+# Zachary Lippay
+
 from dronekit import connect, VehicleMode, Vehicle
 import sys
 import time
