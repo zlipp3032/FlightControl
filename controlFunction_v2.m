@@ -1,5 +1,7 @@
 % Example for PD controller on Leaader position and velocity
 
+% Example for PD controller on Leaader position and velocity
+
 clear
 clc
 close all
@@ -18,11 +20,10 @@ fopen(u);
 % Allocate memory to known matrices
 q = zeros(length(TIME),3);
 p = zeros(length(TIME),3);
-encq = zeros(length(TIME),3);
-encp = zeros(length(TIME),3);
-encqg = zeros(length(TIME),3);
-encpg = zeros(length(TIME),3);
-stringer = zeros(length(TIME),4,3);
+theta = zeros(length(TIME),3); % YAW,ROLL,PITCH is the current input to the send command
+enc = zeros(length(TIME),3,3);
+encg = zeros(length(TIME),3,3);
+stringer = zeros(length(TIME),6,3);
 stringerLeader = zeros(length(TIME),4,3);
 scoobiedoo = ones(length(TIME)); % This value is used in the computation of th z position
 
@@ -71,7 +72,7 @@ d = 500; %(cm) Longest distance used for determining resolution of movement
 kp = 5; % Proportional Gain for PD controller
 kd = 0.9; % Derivative Gain for PD controller
 
-pause(3) % Wait three seconds for dramatic effect
+pause(3)
 
 for i = 1:length(TIME)
 
@@ -85,10 +86,10 @@ for i = 1:length(TIME)
     p(i,:) = pi+Ts.*ucont(i,:);
     
     % Call the functions
-    [encqg(i,:),encpg(i,:)] = encodeData_v3(qg(i,:),pg(i,:),d);
-    [encq(i,:),encp(i,:)] = encodeData_v3(q(i,:),p(i,:),d);
-    [stringerLeader(i,:,1),stringerLeader(i,:,2),stringerLeader(i,:,3)] = sendLeaderState(encqg(i,:),encpg(i,:));     
-    [stringer(i,:,1),stringer(i,:,2),stringer(i,:,3)] = sendState_v7(encq(i,:),encp(i,:)); 
+    [encg(i,:,1),encg(i,:,2),encg(i,:,3)] = encodeData_v3(qg(i,:),pg(i,:),theta(i,:),d);
+    [enc(i,:,1),enc(i,:,2),enc(i,:,3)] = encodeData_v3(q(i,:),p(i,:),theta(i,:),d);
+    [stringerLeader(i,:,1),stringerLeader(i,:,2),stringerLeader(i,:,3)] = sendLeaderState(encg(i,:,1),encg(i,:,2));     
+    [stringer(i,:,1),stringer(i,:,2),stringer(i,:,3)] = sendState_v7(enc(i,:,1),enc(i,:,2),enc(i,:,3)); 
 %     [decq(i,:),decp(i,:)] = decodeData_v3(stringer(i,:,1),stringer(i,:,2),stringer(i,:,3),d);
     pause(0.02) %50Hz
     
