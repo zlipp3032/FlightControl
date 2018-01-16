@@ -186,7 +186,7 @@ class Control(threading.Thread):
             print 'Waiting for vehicle to initialize...'
             time.sleep(1)
         print 'Arming Motors'
-        self.vehicle.mode = VehicleMode("STABALIZE")
+        self.vehicle.mode = VehicleMode("STABILIZE")
         self.vehicle.armed = True
         time.sleep(5) #Wait Five Seconds before taking off
 #        self.vehicle.simple_takeoff(TargtAltitude)
