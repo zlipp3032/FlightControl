@@ -25,11 +25,14 @@ class Control(threading.Thread):
         self.rigidBodyState.startTime = datetime.now()
         self.counter = 0
         self.stoprequest = threading.Event()
-#        self.vehicle = vehicle
+        self.vehicle = vehicle
         self.startTime = startTime
         self.rigidBodyState.ID = 1#BE SURE TO UPDATE THIS WHEN IT COMES TIME FOR MULTIAGENT TESTING!!!!!
         self.rigidBodyState.parameters = defaultParams
-
+        self.rigidBodyState.lastGPSContact = -1
+        self.rigidBodyState.parameters.isTakeOff = False
+        self.TargetAltitude = self.rigidBodyState.parameters.TargetAltitude
+        
     def stop(self):
         self.stoprequest.set()
         print "Stop Flag Set - Control"
@@ -49,18 +52,33 @@ class Control(threading.Thread):
 #            self.getRigidBodyState()
             self.RigidBodies[self.rigidBodyState.ID] = self.rigidBodyState
 #            print self.rigidBodyState.leader
-            self.computeControl()
+            # Implement a failsafe to ensure the computer is recceving data from the computer before it computes the control
+            if(not self.rigidBodyState.isGPS):
+                self.checkGPS()
+            if(self.rigidBodyState.isGPS and True):
+                if(not self.checkAbort()):
+                    if(self.rigidBodyState.parameters.isTakeOff):
+                        self.computeControl()
+                    else:
+                        self.sendTakeOff(self.TargetAltitude)
 #            self.pushStatetoTxQueue()
             self.pushStatetoLoggingQueue()
             time.sleep(self.rigidBodyState.parameters.Ts)
         self.stop()
-#        self.releaseControl()
-#        self.vehicle.close()
+        self.releaseControl()
+        self.vehicle.close()
         print "Control Stopped"
 
-    def updateGlobalStatewithData(self,msg):
-        self.decodeMessage(msg)
 
+        
+    def updateGlobalStatewithData(self,msg):
+        if (msg.type == 'UAV'):
+            self.decodeMessage(msg)
+        else:
+            self.decodeMessage(msg)
+
+
+        
     def decodeMessage(self,msg):
         if(msg.content.ID>0):
             ID = int(msg.content.ID)# + self.rigidBodyState.ID
@@ -77,22 +95,79 @@ class Control(threading.Thread):
     def getRigidBodyState(self,msg):
         self.rigidBodyState.timeout.peerLastRx[msg.content.ID] = datetime.now() #This might cause issues the way this is currently set up...need to fix...
 #        self.rigidBodyState.position = self.RigidBodies[ID]
-        self.rigidBodyState.position = msg.content.position
-        self.rigidBodyState.velocity = msg.content.velocity
-        self.rigidBodyState.leader = msg.content.leader
+        if(msg.content.ID>0):
+            self.rigidBodyState.position = msg.content.position
+            self.rigidBodyState.velocity = msg.content.velocity
+        else:
+            self.rigidBodyState.leader = msg.content.leader
 #        print self.rigidBodyState.position
         self.rigidBodyState.time = datetime.now()
         self.counter+=1
+        #self.rigidBodyState.channels = dict(zip(self.vehicle.channels.keys(),elf.vehicle.channels.values())) #Necessary to be able to erialize it
        # self.rigidBodyState.velocity = BackEuler()
 
+
+       
+    def checkAbort(self):
+        if(self.checkTimeouts()):
+            self.rigidBodyState.abortReason = "Timeout"
+            self.rigdBodyState.RCLatch = True
+            self.rigidBodyState.isGPS = False
+            self.releaseControl()
+#            self.landRigidBodySOLO()
+            return True
+        #print "Flight Mode: " + str(self.vehicle.mode)
+#        if(not (self.vehicle.mode == ControlMode)):
+#            self.rigidBodyState.RCLatch = True
+#            self.rigidBodyState.isGPS = False
+#            self.releaseControl()
+#            self.landRigidBodySOLO()
+#            return True
+
+
+
+    def checkGPS(self):
+        #Check Timeouts
+        if(self.checkTimeouts()):
+            print "No GPS - Timeout"
+            self.rigidBodyState.RCLatch = True
+            return False
+        #Check configuration
+        if(not self.rigidBodyState.parameters.isComplete):
+           self.rigidBodyState.RCLatch = True
+           return False
+#        if(not (self.vehicle.mode == ControlMode)):
+#           print "Wont't Engage - control Mode"
+#           print "Current Mode: %s" % self.vehicle.mode
+#           self.rigidBodyState.RCLatach = True
+#           return False
+        self.rigidBodyState.RCLatch = True # Set the Latch
+        self.rigidBodyState.isGPS = True # GPS is being received
+        return True
+
+
+    
+    # Check for a GPS timeout - If no GPS, control should not be engaged
+    def checkTimeouts(self):
+        didTimeout = False
+        if(datetime.now() - timedelta(seconds = self.rigidBodyState.lastGPSContact) < datetime.now() - timedelta(seconds = self.rigidBodyState.parameters.GPSTimeout)):
+            print "GPS Timeout"
+            self.rigidBodyState.timeout.GPSTimeoutTime = time.time()
+            didTimeout = True
+        return didTimeout
+
+
+    
   #  def pushStatetoTxQueue(self):
   #      msg = Message()
-  #      msg.type = "UAV"
+  #      msg.type = 'UAV'
   #      msg.sendTime = datetime.now()
   #      msg.content = self.rigidBodyState
 #        self.transmitQueue.put(msg)
   #      return msg
 
+
+  
     def pushStatetoLoggingQueue(self):
         msg = Message()
         msg.type = "UAV_LOG"
@@ -103,21 +178,67 @@ class Control(threading.Thread):
 #        print msg.content
         self.logQueue.put(msg)
 
+
+        
+    def sendTakeOff(self,TargetAltitude):
+        print 'Basic pre-arm checks'
+        while not self.vehicle.is_armable:
+            print 'Waiting for vehicle to initialize...'
+            time.sleep(1)
+        print 'Arming Motors'
+        self.vehicle.mode = VehicleMode("STABALIZE")
+        self.vehicle.armed = True
+        time.sleep(5) #Wait Five Seconds before taking off
+#        self.vehicle.simple_takeoff(TargtAltitude)
+        #Will need to use channel overrides and likely PD controller to take off vertically without GPS
+        if(self.rigidodyState.position.z>=TargetAltitude*0.95):
+             self.rigidBodyState.parameters.isTakeOff = True
+             time.sleep(1)
+        else:
+           self.rigidBodyState.control.ux = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.x - self.rigidBodyState.initPos.x) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vx - 0)
+           self.rigidBodyState.control.uy = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.y - self.rigidBodyState.initPos.y) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vy - 0)
+           self.rigidBodyState.control.uz = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.z - TargetAltitude) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vz - 0)
+        
+
+        
     def computeControl(self):
-        self.rigidBodyState.control.ux = -self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.x - self.rigidBodyState.leader.qgx) - self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vx - self.rigidBodyState.leader.pgx)
-        self.rigidBodyState.control.uy = -self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.y - self.rigidBodyState.leader.qgy) - self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vy - self.rigidBodyState.leader.pgy)
-        self.rigidBodyState.control.uz = -self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.z - self.rigidBodyState.leader.qgz) - self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vz - self.rigidBodyState.leader.pgz)
+        self.rigidBodyState.control.ux = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.x - self.rigidBodyState.leader.qgx) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vx - self.rigidBodyState.leader.pgx)
+        self.rigidBodyState.control.uy = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.y - self.rigidBodyState.leader.qgy) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vy - self.rigidBodyState.leader.pgy)
+        self.rigidBodyState.control.uz = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.z - self.rigidBodyState.leader.qgz) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vz - self.rigidBodyState.leader.pgz)
 #        print self.rigidBodyState.control
         #Implement channel override algorithm here
         self.scaleControl()
 
+        
     def scaleControl(self):
+        #Scale the compute control values to match the format used in vehicle.channel.overrides{}
+        #Will need to rotate the control from the inertial frame to the body frame
         ROLL = 1
         PITCH = 2
         THROTTLE = 3 
-        YAW = 4
+        YAW = 1020
+        # Saturate to keep commands in range of input values
+        ROLL = self.saturate(ROLL,1000,2000)
+        PITCH = self.saturate(PITCH,1000,2000)
+        THROTTLE = self.saturate(THROTTLE,1000,2000)
+        YAW = self.saturate(YAW,1000,2000)
         self.sendCommand(ROLL,PITCH,THROTTLE,YAW)
 
+
+        
     def sendCommand(self,ROLL,PITCH,THROTTLE,YAW):
-        print 'Roll: %s, Pitch: %s, Throttle: %s, Yaw,%s' % (ROLL,PITCH,THROTTLE,YAW)
-#        self.vehicle.channels.overrides = {'1': ROLL,'2': PITCH,'3': THROTTLE,'4': YAW}
+#        print 'Roll: %s, Pitch: %s, Throttle: %s, Yaw,%s' % (ROLL,PITCH,THROTTLE,YAW)
+        self.vehicle.channels.overrides = {'1': ROLL,'2': PITCH,'3': THROTTLE,'4': YAW}
+
+
+        
+    def saturate(self, value, minimum, maximum):
+        out = max(value,minimum)
+        out = min(out,maximum)
+        return out
+
+
+    
+    #This function is used to clear commands being sent to the pixhawk.
+    def releaseControl(self):
+        self.vehicle.channels.overrides = {}

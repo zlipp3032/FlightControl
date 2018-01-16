@@ -26,6 +26,7 @@ class Control(threading.Thread):
         self.startTime = startTime
         self.rigidBodyState.ID = 1#BE SURE TO UPDATE THIS WHEN IT COMES TIME FOR MULTIAGENT TESTING!!!!!
         self.rigidBodyState.parameters = defaultParams
+        self.lastGPSContact = -1
 
     def stop(self):
         self.stoprequest.set()
@@ -44,9 +45,16 @@ class Control(threading.Thread):
                 except Queue.Empty:
                     break #no more messages
 #            self.getRigidBodyState()
+            # Implement a failsafe to ensure the computer is recceving data from the computer before it computes the control
+            if(not self.rigidBodyState.isGPS):
+                self.checkGPS()
+            if(self.rigidBodyState.isGPS and True):
+                if(not self.checkAbort()):
+                    self.computeControl()
+            
             self.RigidBodies[self.rigidBodyState.ID] = self.rigidBodyState
 #            print self.rigidBodyState.leader
-            self.computeControl()
+#            self.computeControl()
 #            self.pushStatetoTxQueue()
             self.pushStatetoLoggingQueue()
             time.sleep(self.rigidBodyState.parameters.Ts)
@@ -72,14 +80,60 @@ class Control(threading.Thread):
     def getRigidBodyState(self,msg):
         self.rigidBodyState.timeout.peerLastRx[msg.content.ID] = datetime.now() #This might cause issues the way this is currently set up...need to fix...
 #        self.rigidBodyState.position = self.RigidBodies[ID]
-        self.rigidBodyState.position = msg.content.position
-        self.rigidBodyState.velocity = msg.content.velocity
-        self.rigidBodyState.leader = msg.content.leader
+        if(msg.content.ID>0):
+            self.rigidBodyState.position = msg.content.position
+            self.rigidBodyState.velocity = msg.content.velocity
+        else:
+            self.rigidBodyState.leader = msg.content.leader
 #        print self.rigidBodyState.position
         self.rigidBodyState.time = datetime.now()
         self.counter+=1
        # self.rigidBodyState.velocity = BackEuler()
 
+    def checkAbort(self):
+        if(self.checkTimeouts()):
+            self.rigidBodyState.abortReason = "Timeout"
+            self.rigdBodyState.RCLatch = True
+            self.rigidBodyState.isGPS = False
+            self.releaseControl()
+#            self.landRigidBodySOLO()
+            return True
+        #print "Flight Mode: " + str(self.vehicle.mode)
+#        if(not (self.vehicle.mode == ControlMode)):
+#            self.rigidBodyState.RCLatch = True
+#            self.rigidBodyState.isGPS = False
+#            self.releaseControl()
+#            self.landRigidBodySOLO()
+#            return True
+
+    def checkGPS(self):
+        #Check Timeouts
+        if(self.checkTimeouts()):
+            print "No GPS - Timeout"
+            self.rigidBodyState.RCLatch = True
+            return False
+        #Check configuration
+        if(not self.rigidBodyState.parameters.isComplete):
+           self.rigidBodyState.RCLatch = True
+           return False
+#        if(not (self.vehicle.mode == ControlMode)):
+#           print "Wont't Engage - control Mode"
+#           print "Current Mode: %s" % self.vehicle.mode
+#           self.rigidBodyState.RCLatach = True
+#           return False
+        self.rigidBodyState.RCLatch = True # Set the Latch
+        self.rigidBodyState.isGPS = True # GPS is being received
+        return True
+
+    # Check for a GPS timeout - If no GPS, control should not be engaged
+    def checkTimeouts(self):
+        didTimeout = False
+        if(datetime.now() - timedelta(seconds = self.lastGPSContact) < datetime.now() - timedelta(seconds = self.rigidBodyState.parameters.GPSTimeout)):
+            print "GPS Timeout"
+            self.rigidBodyState.timeout.GPSTimeoutTime = time.time()
+            didTimeout = True
+        return didTimeout
+        
   #  def pushStatetoTxQueue(self):
   #      msg = Message()
   #      msg.type = "UAV"

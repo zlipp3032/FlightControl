@@ -1,3 +1,6 @@
+# Create string to write to the logged file
+# Zachary Lippay
+
 import sys
 from rigidBodyState import *
 from datetime import datetime
@@ -70,3 +73,4 @@ def msgToCSVHeaders():
 def vsToCSVHeaders():
 	str = "ID,isFlocking,roll,pitch,yaw,rollspeed,pitchspeed,yawspeed,lat,lon,alt,latSpd,lngSpd,altSpeed,airspeed,heading,headingRate,thetaDDotApprox,lastRXGnd,lastRX1,lastRX2,lastRX3,abortReason, headingRateCmd, climbRateCmd, airSpeedCmd,thetaD,accAltError,ch1,ch2,ch3,ch5,ch6,servo1,servo2,servo3"
 	return str
+
