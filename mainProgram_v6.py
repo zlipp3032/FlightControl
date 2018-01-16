@@ -1,6 +1,5 @@
 # Main flight program - send commands to Pixhawk via connect method
 # Zachary Lippay
-
 from dronekit import connect, VehicleMode, Vehicle
 import sys
 import time
@@ -35,12 +34,6 @@ receiveQueue = Queue.Queue()
 logQueue = Queue.Queue()
 
 
-# Initiate the classes used in this program
-receiveThread = receiveClass_v5.Receiver(receiveQueue,localIP,Port,bufferLength,d)
-logThread = loggingClass.Logging(logQueue,logPath,expectedMAVs,startTime)
-controlThread = controlSimple_v3.Control(logQueue,receiveQueue,startTime,localIP,defaultParams)
-
-
 # Connect to the Pixhawk 2.0 Cube
 #         - It should be noted that the connection string will need to be
 #           modified pending the connect type
@@ -49,8 +42,6 @@ controlThread = controlSimple_v3.Control(logQueue,receiveQueue,startTime,localIP
 #             + Connect string used for serial2 connection to SOLO via UP-Board
 #                 'dev/ttyAMA0' (Note the baudrate needs to be adjusted,
 #                 baud = 57600 for this connectino string)
-
-
 # Setup option parsing to get connection string
 parser = argparse.ArgumentParser(description='Commands vehicle using simple.')
 parser.add_argument('--connect',
@@ -58,17 +49,20 @@ parser.add_argument('--connect',
 args = parser.parse_args()
 connection_string = args.connect
 sitl = None
-
-
 # Start SITL if no connection string specifiied
 if not connection_string:
     import dronekit_sitl
     sitl = dronekit_sitl.start_default()
     connection_string = sitl.connection_string()
-
 # Connect to UDP endpoint (and wait for defualt attributes to accumulate)
 print '\nConnecting to vehicle on: %s' % connection_string
 vehicle = connect(connection_string, wait_ready = True)#, baud=57600) #230400 or 115000 or 250000)
+
+
+# Initiate the classes used in this program
+receiveThread = receiveClass_v5.Receiver(receiveQueue,localIP,Port,bufferLength,d)
+logThread = loggingClass.Logging(logQueue,logPath,expectedMAVs,startTime)
+controlThread = controlSimple_v3.Control(logQueue,receiveQueue,startTime,localIP,defaultParams)
 
 
 #Setup the queues used in this program
