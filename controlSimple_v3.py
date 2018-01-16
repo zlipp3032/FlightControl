@@ -98,6 +98,7 @@ class Control(threading.Thread):
         if(msg.content.ID>0):
             self.rigidBodyState.position = msg.content.position
             self.rigidBodyState.velocity = msg.content.velocity
+            self.rigidBodyState.attitude = msg.content.attitude
         else:
             self.rigidBodyState.leader = msg.content.leader
 #        print self.rigidBodyState.position
@@ -182,11 +183,11 @@ class Control(threading.Thread):
         
     def sendTakeOff(self,TargetAltitude):
         print 'Basic pre-arm checks'
+        self.vehicle.mode = VehicleMode("ALT_HOLD")
         while not self.vehicle.is_armable:
             print 'Waiting for vehicle to initialize...'
             time.sleep(1)
         print 'Arming Motors'
-        self.vehicle.mode = VehicleMode("STABILIZE")
         self.vehicle.armed = True
         time.sleep(5) #Wait Five Seconds before taking off
 #        self.vehicle.simple_takeoff(TargtAltitude)
@@ -198,6 +199,8 @@ class Control(threading.Thread):
            self.rigidBodyState.control.ux = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.x - self.rigidBodyState.initPos.x) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vx - 0)
            self.rigidBodyState.control.uy = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.y - self.rigidBodyState.initPos.y) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vy - 0)
            self.rigidBodyState.control.uz = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.z - TargetAltitude) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vz - 0)
+           self.rotateToBodyFrame()
+           self.scaleAndSendControl()
         
 
         
@@ -207,10 +210,15 @@ class Control(threading.Thread):
         self.rigidBodyState.control.uz = self.rigidBodyState.parameters.kp*(self.rigidBodyState.position.z - self.rigidBodyState.leader.qgz) + self.rigidBodyState.parameters.kd*(self.rigidBodyState.velocity.vz - self.rigidBodyState.leader.pgz)
 #        print self.rigidBodyState.control
         #Implement channel override algorithm here
-        self.scaleControl()
+        self.rotateToBodyFrame()
+        self.scaleAndSendControl()
 
+
+
+    def rotateToBodyFrame(self):
+        print "hello"
         
-    def scaleControl(self):
+    def scaleAndSendControl(self):
         #Scale the compute control values to match the format used in vehicle.channel.overrides{}
         #Will need to rotate the control from the inertial frame to the body frame
         ROLL = 1
@@ -218,17 +226,12 @@ class Control(threading.Thread):
         THROTTLE = 3 
         YAW = 1020
         # Saturate to keep commands in range of input values
-        ROLL = self.saturate(ROLL,1000,2000)
-        PITCH = self.saturate(PITCH,1000,2000)
-        THROTTLE = self.saturate(THROTTLE,1000,2000)
-        YAW = self.saturate(YAW,1000,2000)
-        self.sendCommand(ROLL,PITCH,THROTTLE,YAW)
+        self.rigidBodyState.command.Roll = self.saturate(ROLL,1000,2000)
+        self.rigidBodyState.command.Pitch = self.saturate(PITCH,1000,2000)
+        self.rigidBodyState.command.Throttle = self.saturate(THROTTLE,1000,2000)
+        self.rigidBodyState.command.Yaw = self.saturate(YAW,1000,2000)
+        self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Yaw,'3': self.rigidBodyState.command.Throttle,'4': self.rigidBodyState.command.Yaw}
 
-
-        
-    def sendCommand(self,ROLL,PITCH,THROTTLE,YAW):
-#        print 'Roll: %s, Pitch: %s, Throttle: %s, Yaw,%s' % (ROLL,PITCH,THROTTLE,YAW)
-        self.vehicle.channels.overrides = {'1': ROLL,'2': PITCH,'3': THROTTLE,'4': YAW}
 
 
         
