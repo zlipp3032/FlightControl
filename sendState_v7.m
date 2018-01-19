@@ -1,4 +1,4 @@
-function [xx,yy,zz] = sendState_v7(q,p)
+function [xx,yy,zz] = sendState_v7(q,p,theta)
 
 % PLEASE READ
 % Please note this function works when a udp bordacast has been established.
@@ -14,14 +14,14 @@ function [xx,yy,zz] = sendState_v7(q,p)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global u
-xx = ['0','0','0','0'];
-yy = ['0','0','0','0'];
-zz = ['0','0','0','0'];
+xx = ['0','0','0','0','0','0'];
+yy = ['0','0','0','0','0','0'];
+zz = ['0','0','0','0','0','0'];
 
 % Write the current state to the data string 
-msg = '1,+,0,+,0,+,0,+,0,+,0,+,0'; % This is simulating that we have the information for one 
+msg = '1,+,0,+,0,+,0,+,0,+,0,+,0,+,0,+,0,+,0'; % This is simulating that we have the information for one 
 %                                       agent in the format 
-%                                       'rigidBody.ID, +/- , x , +/- , y , +/- , z , +/- , vx , +/- , vy , +/- , vz '
+%                                       'rigidBody.ID, +/- , x , +/- , y , +/- , z , +/- , vx , +/- , vy , +/- , vz , +/- , ROLL , +/- , PITCH, +/- , YAW'
     
 % Update X value to msg
 if q(1)>0
@@ -113,7 +113,50 @@ elseif msg(25) == ','
 end
 zz(1,4) = msg(25); %For debugging purposes
 
+%Update ROLL value to msg
+if theta(2)>0
+    msg(27) = '+';
+elseif theta(1)<0
+    msg(27) = '-';
+end
+xx(1,5) = msg(27); %For debugging purposes
+msg(29) = int8(abs(theta(2)));
+if abs(theta(2)) >= 127
+    msg(29) = int8(126);
+elseif msg(29) == ','
+    msg(29) = int8(127);
+end 
+xx(1,6) = msg(29); % For debugging purposes
 
+%Update PITCH value to msg
+if theta(3)>0
+    msg(31) = '+';
+elseif theta(3)<0
+    msg(31) = '-';
+end
+yy(1,5) = msg(31); % For debugging purposes
+msg(33) = int8(abs(theta(3)));
+if abs(theta(3)) >= 127
+    msg(33) = int8(126);
+elseif msg(33) == ','
+    msg(33) = int8(127);
+end 
+yy(1,6) = msg(33); %For debugging purposes
+
+%Update YAW value to msg
+if theta(1)>0
+    msg(35) = '+';
+elseif theta(1)<0
+    msg(35) = '-';
+end
+zz(1,5) = msg(35); % For debugging purposes
+msg(37) = int8(abs(theta(1)));
+if abs(theta(1)) >= 127
+    msg(37) = int8(126);
+elseif msg(37) == ','
+    msg(37) = int8(127);
+end
+zz(1,6) = msg(37); %For debugging purposes
 
 % Send the data to the network
 try

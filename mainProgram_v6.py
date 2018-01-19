@@ -34,6 +34,12 @@ receiveQueue = Queue.Queue()
 logQueue = Queue.Queue()
 
 
+# Initiate the classes used in this program
+#receiveThread = receiveClass_v5.Receiver(receiveQueue,localIP,Port,bufferLength,d)
+#logThread = loggingClass.Logging(logQueue,logPath,expectedMAVs,startTime)
+#controlThread = controlSimple_v3.Control(logQueue,receiveQueue,startTime,localIP,defaultParams)
+
+
 # Connect to the Pixhawk 2.0 Cube
 #         - It should be noted that the connection string will need to be
 #           modified pending the connect type
@@ -93,4 +99,3 @@ while hasLiveThreads(threads):
             t.stop()
 
 print "Exiting mainProgram"
-

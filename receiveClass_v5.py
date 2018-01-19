@@ -56,6 +56,7 @@ class Receiver(threading.Thread):
             if(not msg.content.ID == 0):
                 msg.content.position = self.rigidBodyState.position
                 msg.content.velocity = self.rigidBodyState.velocity
+                msg.content.attitude = self.rigidBodyState.attitude
             else:
                 msg.content.leader = self.rigidBodyState.leader
             # print 'Receive Data'
@@ -139,6 +140,39 @@ class Receiver(threading.Thread):
                     self.rigidBodyState.velocity.vz = 44*reso
                 else:
                     self.rigidBodyState.velocity.vz = -44*reso
+            #Decode the ROLL
+            if( not ord(PIG[14])==127):
+                if( ord(PIG[13])==43):
+                    self.rigidBodyState.attitude.roll = ord(PIG[14])*reso
+                else:
+                    self.rigidBodyState.attitude.roll = -ord(PIG[14])*reso
+            else: #ord(PIG[2]) = 127
+                if( ord(PIG[13])==43):
+                    self.rigidBodyState.attitude.roll = 44*reso
+                else:
+                    self.rigidBodyState.attitude.roll = -44*reso
+            # Decode the PITCH
+            if( not ord(PIG[16])==127):
+                if( ord(PIG[15])==43):
+                    self.rigidBodyState.attitude.pitch = ord(PIG[16])*reso
+                else:
+                    self.rigidBodyState.attitude.pitch = -ord(PIG[16])*reso
+            else: #ord(PIG[4]) = 127
+                if( ord(PIG[15])==43):
+                    self.rigidBodyState.attitude.pitch = 44*reso
+                else:
+                    self.rigidBodyState.attitude.pitch = -44*reso
+            # Decode the YAW
+            if( not ord(PIG[18])==127):
+                if( ord(PIG[17])==43):
+                    self.rigidBodyState.attitude.yaw = ord(PIG[18])*reso
+                else:
+                    self.rigidBodyState.attitude.yaw = -ord(PIG[18])*reso
+            else: #ord(PIG[6]) = 127
+                if( ord(PIG[17])==43):
+                    self.rigidBodyState.attitude.yaw = 44*reso
+                else:
+                    self.rigidBodyState.attitude.yaw = -44*reso
         else:
 #            print "Leader"
             # Decode the leader x position
