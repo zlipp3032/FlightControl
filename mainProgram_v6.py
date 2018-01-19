@@ -38,7 +38,7 @@ logQueue = Queue.Queue()
 #         - It should be noted that the connection string will need to be
 #           modified pending the connect type
 #             + Connect string used for wireless connection to SOLO
-#                 'udp:0.0.0.0:14450'
+#                 'udpin:0.0.0.0:14550'
 #             + Connect string used for serial2 connection to SOLO via UP-Board
 #                 'dev/ttyAMA0' (Note the baudrate needs to be adjusted,
 #                 baud = 57600 for this connectino string)
