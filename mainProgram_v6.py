@@ -68,7 +68,7 @@ vehicle = connect(connection_string, wait_ready = True)#, baud=57600) #230400 or
 # Initiate the classes used in this program
 receiveThread = receiveClass_v5.Receiver(receiveQueue,localIP,Port,bufferLength,d)
 logThread = loggingClass.Logging(logQueue,logPath,expectedMAVs,startTime)
-controlThread = controlSimple_v3.Control(logQueue,receiveQueue,startTime,localIP,defaultParams)
+controlThread = controlSimple_v3.Control(logQueue,receiveQueue,startTime,localIP,defaultParams,vehicle)
 
 
 #Setup the queues used in this program
