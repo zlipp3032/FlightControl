@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 logging.basicConfig(level=logging.WARNING)
 
 class Control(threading.Thread):
-    def __init__(self,logQueue,receiveQueue,startTime,localIP,defaultParams):
+    def __init__(self,logQueue,receiveQueue,startTime,localIP,defaultParams,vehicle):
         threading.Thread.__init__(self)
         self.isRunning=True
         self.logQueue = logQueue
