@@ -56,19 +56,13 @@ class Control(threading.Thread):
 		self.getLeaderData()
 		self.rigidBodyState.leader.qgz = -self.rigidBodyState.parameters.targetAltitude
 		print 'Setting Initial Position'
-	    elif(self.rigidBodyState.parameters.isLanding):
-		print 'Yea Buddy'
-		if(not self.checkAbort()):
-			desDest = self.rigidBodyState.position.z - self.rigidBodyState.initPos.zo
-			self.rigidBodyState.leader.qgz = self.rigidBodyState.initPos.zo
-			self.computeLandingVelocity(desDest)
 	    else:
             	if(self.rigidBodyState.isGPS and True):
                 	if(self.rigidBodyState.parameters.isTakeoff):
 				if(not self.checkAbort()):
                     			self.computePDControl()
 			else:
-				if(not self.rigidBodyState.position.z <= -self.rigidBodyState.parameters.targetAltitude*0.95):
+				if(not abs(self.rigidBodyState.position.z) >= abs(self.rigidBodyState.parameters.targetAltitude)*0.95):
 					if(not self.checkAbort()):
 						desDest = self.rigidBodyState.position.z - self.rigidBodyState.leader.qgz
 						self.computeTakeoffVelocity(desDest)
@@ -82,7 +76,7 @@ class Control(threading.Thread):
 #            self.pushStatetoTxQueue()
             self.pushStatetoLoggingQueue()
 	    self.counter = self.counter + 1
-	    print self.counter
+	   # print self.counter
             time.sleep(self.rigidBodyState.parameters.Ts)
 	self.releaseControl()
         self.stop()
@@ -112,20 +106,18 @@ class Control(threading.Thread):
 			print 'Approaching Target Altitude'
 
     def computeLandingVelocity(self,desDest):
-        if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
-                self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/abs(desDest)
+	if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
+		self.rigdBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/abs(desDest)
                 #print self.rigidBodyState.leader
-                if(not self.checkAbort()):
+                if( not self.checkAbort()):
                         self.computePDControl()
-                        print 'Approaching Landing'
-        elif(self.rigidBodyState.position.z >= self.rigidBodyState.initPos.zo/0.93):
-		self.vehicle.channels.overrides = {'3':1000}
-		self.vehicle.armed = False
-	else:
+                        print 'Landing'
+        else:
                 self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/self.rigidBodyState.parameters.stoppingDistance
                 if(not self.checkAbort()):
                         self.computePDControl()
                         print 'Landing'
+
 
 
     def updateGlobalStatewithData(self,msg):
@@ -153,8 +145,7 @@ class Control(threading.Thread):
 
     def setInitialPos(self):
 	initPosSet = False
-	#if(self.counter>50):
-        if(abs(self.rigidBodyState.position.z)>0.125):
+	if(self.counter>50):
 		self.rigidBodyState.initPos.xo = self.rigidBodyState.position.x        
 		self.rigidBodyState.initPos.yo = self.rigidBodyState.position.y
 		self.rigidBodyState.initPos.zo = self.rigidBodyState.position.z
@@ -197,8 +188,6 @@ class Control(threading.Thread):
 	if(not self.vehicle.mode == 'STABILIZE'):
 	    self.releaseControl()
 	    return True
-        if(self.counter > 650):
-            self.rigidBodyState.parameters.isLanding = True
 	return False
 
     def checkGPS(self):
@@ -218,9 +207,7 @@ class Control(threading.Thread):
 #           return False
         self.rigidBodyState.RCLatch = True # Set the Latch
         self.rigidBodyState.isGPS = True # GPS is being received
-        #if(self.counter > 650):
-	#	self.parameters.rigidBodyState.isLand = True
-	return True
+        return True
 
     # Check for a GPS timeout - If no GPS, control should not be engaged
     def checkTimeouts(self):
@@ -301,6 +288,7 @@ class Control(threading.Thread):
         self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
         #print self.rigidBodyState.command
 	#print self.rigidBodyState.attitude
+	print self.RigidBodies
 	#print self.vehicle.channels.overrides
         #print self.rigidBodSytate.leader
 
