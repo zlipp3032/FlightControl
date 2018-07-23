@@ -54,7 +54,7 @@ class Receiver(threading.Thread):
             if(not msg.content.ID == 0):
                 msg.content.position = self.rigidBodyState.position
                 msg.content.velocity = self.rigidBodyState.velocity
-                #msg.content.attitude = self.rigidBodyState.attitude
+                msg.content.attitude = self.rigidBodyState.attitude
             else:
                 msg.content.leader = self.rigidBodyState.leader
             # print 'Receive Data'

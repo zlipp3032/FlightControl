@@ -19,7 +19,7 @@ Port = 5001
 myAddr = (localIP,Port)
 bufferLength = 1000
 expectedMAVs = 1
-logPath = '/home/zsl/Desktop/Control-Master/junk'
+logPath = '/home/zsl/Desktop/FlightProgram_Hover/Data'
 #broadcastIP = '192.168.0.255' #Will be necessary when we introduce multiple agents
 #transmitAddr = (broadcastIP,Port)
 d = 500
@@ -36,7 +36,7 @@ logQueue = Queue.Queue()
 #             + Connect string used for wireless connection to SOLO
 #                 'udpin:0.0.0.0:14550'
 #             + Connect string used for serial2 connection to SOLO via UP-Board
-#                 '/dev/ttyAMA0' (Note the baudrate needs to be adjusted,
+#                 'dev/ttyAMA0' (Note the baudrate needs to be adjusted,
 #                 baud = 57600 for this connectino string)
 # Setup option parsing to get connection string
 parser = argparse.ArgumentParser(description='Commands vehicle using simple.')

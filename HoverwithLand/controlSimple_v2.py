@@ -56,13 +56,19 @@ class Control(threading.Thread):
 		self.getLeaderData()
 		self.rigidBodyState.leader.qgz = -self.rigidBodyState.parameters.targetAltitude
 		print 'Setting Initial Position'
+	    elif(self.rigidBodyState.parameters.isLanding):
+		print 'Yea Buddy'
+		if(not self.checkAbort()):
+			desDest = self.rigidBodyState.position.z - self.rigidBodyState.initPos.zo
+			self.rigidBodyState.leader.qgz = self.rigidBodyState.initPos.zo
+			self.computeLandingVelocity(desDest)
 	    else:
             	if(self.rigidBodyState.isGPS and True):
                 	if(self.rigidBodyState.parameters.isTakeoff):
 				if(not self.checkAbort()):
                     			self.computePDControl()
 			else:
-				if(not abs(self.rigidBodyState.position.z) >= abs(self.rigidBodyState.parameters.targetAltitude)*0.95):
+				if(not self.rigidBodyState.position.z <= -self.rigidBodyState.parameters.targetAltitude*0.95):
 					if(not self.checkAbort()):
 						desDest = self.rigidBodyState.position.z - self.rigidBodyState.leader.qgz
 						self.computeTakeoffVelocity(desDest)
@@ -76,7 +82,7 @@ class Control(threading.Thread):
 #            self.pushStatetoTxQueue()
             self.pushStatetoLoggingQueue()
 	    self.counter = self.counter + 1
-	   # print self.counter
+	    print self.counter
             time.sleep(self.rigidBodyState.parameters.Ts)
 	self.releaseControl()
         self.stop()
@@ -106,18 +112,20 @@ class Control(threading.Thread):
 			print 'Approaching Target Altitude'
 
     def computeLandingVelocity(self,desDest):
-	if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
-		self.rigdBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/abs(desDest)
+        if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
+                self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/abs(desDest)
                 #print self.rigidBodyState.leader
-                if( not self.checkAbort()):
+                if(not self.checkAbort()):
                         self.computePDControl()
-                        print 'Landing'
-        else:
+                        print 'Approaching Landing'
+        elif(self.rigidBodyState.position.z >= self.rigidBodyState.initPos.zo/0.93):
+		self.vehicle.channels.overrides = {'3':1000}
+		self.vehicle.armed = False
+	else:
                 self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/self.rigidBodyState.parameters.stoppingDistance
                 if(not self.checkAbort()):
                         self.computePDControl()
                         print 'Landing'
-
 
 
     def updateGlobalStatewithData(self,msg):
@@ -145,7 +153,8 @@ class Control(threading.Thread):
 
     def setInitialPos(self):
 	initPosSet = False
-	if(self.counter>50):
+	#if(self.counter>50):
+        if(abs(self.rigidBodyState.position.z)>0.125):
 		self.rigidBodyState.initPos.xo = self.rigidBodyState.position.x        
 		self.rigidBodyState.initPos.yo = self.rigidBodyState.position.y
 		self.rigidBodyState.initPos.zo = self.rigidBodyState.position.z
@@ -188,6 +197,8 @@ class Control(threading.Thread):
 	if(not self.vehicle.mode == 'STABILIZE'):
 	    self.releaseControl()
 	    return True
+        if(self.counter > 650):
+            self.rigidBodyState.parameters.isLanding = True
 	return False
 
     def checkGPS(self):
@@ -207,7 +218,9 @@ class Control(threading.Thread):
 #           return False
         self.rigidBodyState.RCLatch = True # Set the Latch
         self.rigidBodyState.isGPS = True # GPS is being received
-        return True
+        #if(self.counter > 650):
+	#	self.parameters.rigidBodyState.isLand = True
+	return True
 
     # Check for a GPS timeout - If no GPS, control should not be engaged
     def checkTimeouts(self):
@@ -238,29 +251,36 @@ class Control(threading.Thread):
 
     def computePDControl(self):
 	print self.rigidBodyState.position
-        dx = self.diffFunction(self.rigidBodyState.position.x,self.rigidBodyState.leader.qgx)
-	dy = self.diffFunction(self.rigidBodyState.position.y,self.rigidBodyState.leader.qgy)
-	dz = self.diffFunction(self.rigidBodyState.position.z,self.rigidBodyState.leader.qgz)	
-	dvx = self.diffFunction(self.rigidBodyState.velocity.vx,self.rigidBodyState.leader.pgx)	
-	dvy = self.diffFunction(self.rigidBodyState.velocity.vy,self.rigidBodyState.leader.pgy)
-	dvz = self.diffFunction(self.rigidBodyState.velocity.vz,self.rigidBodyState.leader.pgz)
-	# Compute Desired Accelerations
-	self.rigidBodyState.command.ux = self.rigidBodyState.parameters.kpx*(dx) + self.rigidBodyState.parameters.kdx*(dvx)
-        self.rigidBodyState.command.uy = self.rigidBodyState.parameters.kpy*(dy) + self.rigidBodyState.parameters.kdy*(dvy)
-        self.rigidBodyState.command.uz = self.rigidBodyState.parameters.kpz*(dz) + self.rigidBodyState.parameters.kdz*(dvz)
-	self.velocityEstimate()
+        #! Compute the difference vectors
+        dq = np.matrix([[self.diffFunction(self.rigidBodyState.position.x,self.rigidBodyState.leader.qgx)],[self.diffFunction(self.rigidBodyState.position.y,self.rigidBodyState.leader.qgy)],[self.diffFunction(self.rigidBodyState.position.z,self.rigidBodyState.leader.qgz)]])
+        dp = np.matrix([[self.diffFunction(self.rigidBodyState.velocity.vx,self.rigidBodyState.leader.pgx)],[self.diffFunction(self.rigidBodyState.velocity.vy,self.rigidBodyState.leader.pgy)],[self.diffFunction(self.rigidBodyState.velocity.vz,self.rigidBodyState.leader.pgz)]])
+	#! Compute Desired Accelerations
+        kp = np.matrix([[self.rigidBodyState.parameters.kpx, 0, 0], [0, self.rigidBodyState.parameters.kpy, 0], [0, 0, self.rigidBodyState.parameters.kpz]])
+        kd = np.matrix([[self.rigidBodyState.parameters.kdx, 0, 0], [0, self.rigidBodyState.parameters.kdy, 0], [0, 0, self.rigidBodyState.parameters.kdz]])
+        uk = kp*dq + kd*dp
+        #! Estimate the velocity command using a low pass filter
+        velGain = 0.1
+        pkp = np.matrix([[self.rigidBodyState.previousState.velPrev_x], [self.rigidBodyState.previousState.velPrev_y], [self.rigidBodyState.previousState.velPrev_z]])
+        ukp = np.matrix([[self.rigidBodyState.previousState.accPrev_x],[self.rigidBodyState.previousState.accPrev_y],[self.rigidBodyState.previousState.accPrev_z]])
+        pk = (1-self.rigidBodyState.parameters.Ts*velGain)*pkp + self.rigidBodyState.parameters.Ts*(1-(velGain*self.rigidBodyState.parameters.Ts)/2)*ukp
+        self.updateControlState(uk,pk)
 
-    def velocityEstimate(self):
-        self.rigidBodyState.command.vel_est_x = self.rigidBodyState.previousState.velPrev_x + 0.5*(self.rigidBodyState.previousState.accPrev_x + self.rigidBodyState.command.ux)*self.rigidBodyState.parameters.Ts
-        self.rigidBodyState.command.vel_est_y = self.rigidBodyState.previousState.velPrev_y + 0.5*(self.rigidBodyState.previousState.accPrev_y + self.rigidBodyState.command.uy)*self.rigidBodyState.parameters.Ts
-        self.rigidBodyState.command.vel_est_z = self.rigidBodyState.previousState.velPrev_z + 0.5*(self.rigidBodyState.previousState.accPrev_z + self.rigidBodyState.command.uz)*self.rigidBodyState.parameters.Ts
-        self.rigidBodyState.previousState.velPrev_x = self.rigidBodyState.command.vel_est_x
-        self.rigidBodyState.previousState.velPrev_y = self.rigidBodyState.command.vel_est_y
-        self.rigidBodyState.previousState.velPrev_z = self.rigidBodyState.command.vel_est_z
-        self.rigidBodyState.previousState.accPrev_x = self.rigidBodyState.command.ux 
-        self.rigidBodyState.previousState.accPrev_y = self.rigidBodyState.command.uy
-        self.rigidBodyState.previousState.accPrev_z = self.rigidBodyState.command.uz
-        # Integrate the velocity error
+    def updateControlState(self,uk,pk):
+        #! Update the command state
+        self.rigidBodyState.command.ux = uk[0,0]
+        self.rigidBodyState.command.uy = uk[1,0]
+        self.rigidBodyState.command.uz = uk[2,0]
+        self.rigidBodyState.command.vel_est_x = pk[0,0]
+        self.rigidBodyState.command.vel_est_y = pk[1,0]
+        self.rigidBodyState.command.vel_est_z = pk[2,0]       
+        #! Update the previous State 
+        self.rigidBodyState.previousState.velPrev_x = pk[0,0]
+        self.rigidBodyState.previousState.velPrev_y = pk[1,0]
+        self.rigidBodyState.previousState.velPrev_z = pk[2,0]
+        self.rigidBodyState.previousState.accPrev_x = uk[0,0] 
+        self.rigidBodyState.previousState.accPrev_y = uk[1,0]
+        self.rigidBodyState.previousState.accPrev_z = uk[2,0]
+        #! Integrate the velocity error
         accVelError = self.rigidBodyState.velocity.vz - self.rigidBodyState.command.vel_est_z 
         self.rigidBodyState.command.accVelZError = self.antiWindup(self.rigidBodyState.command.vel_est_z,-10,10,accVelError,self.rigidBodyState.velocity.vz)
         self.computeAttitudeThrustCommands()
@@ -288,7 +308,6 @@ class Control(threading.Thread):
         self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
         #print self.rigidBodyState.command
 	#print self.rigidBodyState.attitude
-	print self.RigidBodies
 	#print self.vehicle.channels.overrides
         #print self.rigidBodSytate.leader
 
