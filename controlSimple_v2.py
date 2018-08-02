@@ -28,7 +28,7 @@ class Control(threading.Thread):
         self.rigidBodyState.parameters = defaultParams
         self.vehicle = vehicle
         self.lastGPSContact = -1
-        #self.prepTakeoff()
+        self.prepTakeoff()
         self.scoobyDoo = MessageState()
 
     def stop(self):
@@ -95,7 +95,7 @@ class Control(threading.Thread):
 
     def switch_Flight_Sequence(self):
         arg = self.rigidBodyState.flightSeq
-        flightSequence = {0: wait, 1: takeoff, 2: hover, 3: flocking, 4: landing, 5: prepTakeoff}
+        flightSequence = {0: wait, 1: takeoff, 2: hover, 3: flocking, 4: landing}#, 5: prepTakeoff}
         scrappyDoo = switcher.get(arg, lambda: 'Invalid Command')
         self.scrappyDoo()
 
