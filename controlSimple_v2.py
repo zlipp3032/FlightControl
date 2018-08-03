@@ -44,20 +44,20 @@ class Control(threading.Thread):
                             self.receiveQueue.task_done()
                 	except Queue.Empty:
                     		break #no more messages
-            # Implement a failsafe to ensure the UP is recceving data from the computer before it computes the control
-            if(not self.rigidBodyState.isGPS):
-                self.checkGPS()
-            if(not self.rigidBodyState.parameters.InitPos):
-                self.rigidBodyState.parameters.InitPos = self.setInitialPos()
-                self.getLeaderData()
-                self.rigidBodyState.leader.qgz = -self.rigidBodyState.parameters.targetAltitude
-                print 'Setting Initial Position'
-            if(self.rigidBodyState.isGPS and True)
-                self.switch_Flight_Sequence()
-            #self.pushStatetoTxQueue()
-            self.pushStatetoLoggingQueue()
-            self.counter = self.counter + 1
-            time.sleep(self.rigidBodyState.parameters.Ts)
+            	# Implement a failsafe to ensure the UP is recceving data from the computer before it computes the control
+            	if(not self.rigidBodyState.isGPS):
+                	self.checkGPS()
+            	if(not self.rigidBodyState.parameters.InitPos):
+                	self.rigidBodyState.parameters.InitPos = self.setInitialPos()
+                	self.getLeaderData()
+                	self.rigidBodyState.leader.qgz = -self.rigidBodyState.parameters.targetAltitude
+                	print 'Setting Initial Position'
+            	if(self.rigidBodyState.isGPS and True):
+                	self.switch_Flight_Sequence()
+            	#self.pushStatetoTxQueue()
+            	self.pushStatetoLoggingQueue()
+            	self.counter = self.counter + 1
+            	time.sleep(self.rigidBodyState.parameters.Ts)
         self.releaseControl()
         self.stop()
         print "Control Stopped"
@@ -85,7 +85,7 @@ class Control(threading.Thread):
 
             
     def takeoff(self):
-        if(not self.rigidBodyState.isTakeoff):
+        if(not self.rigidBodyState.parameters.isTakeoff):
             if(not self.rigidBodyState.position.z <= -self.rigidBodyState.parameters.targetAltitude*0.95):
                 if(not self.checkAbort()):
                     desDest =  self.rigidBodyState.position.z - self.rigidBodyState.leader.qgz # Fix this to match targetAltitude!!!
@@ -96,7 +96,7 @@ class Control(threading.Thread):
                 self.rigidBodyState.parameters.isHovering = True
                 self.getLeaderData()
         else:
-            if(self.rigidBodyState.isHovering):
+            if(self.rigidBodyState.parameters.isHovering):
                 if(not self.checkAbort()):
                     self.hover()
             else:
@@ -112,9 +112,9 @@ class Control(threading.Thread):
         self.vehicle.mode = VehicleMode('STABILIZE')
         #print 'Basic Prearm Checks'
         print 'Arming Motors'
-        self.vehicle.channels.overrides = {'3':1000}
+        #self.vehicle.channels.overrides = {'3':1000}
         time.sleep(2)
-        self.vehicle.armed = True
+        #self.vehicle.armed = True
 
     def computeTakeoffVelocity(self,desDest):
         if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
@@ -136,9 +136,10 @@ class Control(threading.Thread):
                 self.computePDControl()
                 print 'Approaching Landing'
         elif(self.rigidBodyState.position.z >= self.rigidBodyState.initPos.zo/0.88):
-            self.vehicle.channels.overrides = {'3':1000}
+            #self.vehicle.channels.overrides = {'3':1000}
             self.vehicle.armed = False
             self.rigidBodyState.parameters.isTakeoff = False
+	    print "Vehicle Landed"
         else:
             self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/self.rigidBodyState.parameters.stoppingDistance
             if(not self.checkAbort()):
@@ -170,20 +171,20 @@ class Control(threading.Thread):
         	#self.rigidBodyState.attitude.roll = float(msg.content[8])
         	#self.rigidBodyState.attitude.pitch = float(msg.content[9])
         	self.rigidBodyState.attitude.yaw = float(msg.content[10])
-            self.rigidBodyState.flightSeq = int(msg.content[11])
-            self.rigidBodyState.attitude.roll = self.vehicle.attitude.roll
-            self.rigidBodyState.attitude.pitch = self.vehicle.attitude.pitch
-            self.rigidBodyState.channels = self.vehicle.channels
-            self.RigidBodies[int(ID)] = self.rigidBodyState
+            	self.rigidBodyState.flightSeq = int(msg.content[11])
+            	self.rigidBodyState.attitude.roll = self.vehicle.attitude.roll
+            	self.rigidBodyState.attitude.pitch = self.vehicle.attitude.pitch
+            	self.rigidBodyState.channels = self.vehicle.channels
+            	self.RigidBodies[int(ID)] = self.rigidBodyState
         else:
-            self.scoobyDoo.ID = ID
-            self.scoobyDoo.position.x = float(msg.content[2])
-            self.scoobyDoo.position.y = float(msg.content[3])
-            self.scoobyDoo.position.z = float(msg.content[4])
-            self.scoobyDoo.velocity.vx = float(msg.content[5])
-            self.scoobyDoo.velocity.vy = float(msg.content[6])
-            self.scoobyDoo.velocity.vz = float(msg.content[7])
-            self.RigidBodies[ID] = self.scoobyDoo
+            	self.scoobyDoo.ID = ID
+            	self.scoobyDoo.position.x = float(msg.content[2])
+           	self.scoobyDoo.position.y = float(msg.content[3])
+            	self.scoobyDoo.position.z = float(msg.content[4])
+            	self.scoobyDoo.velocity.vx = float(msg.content[5])
+            	self.scoobyDoo.velocity.vy = float(msg.content[6])
+            	self.scoobyDoo.velocity.vz = float(msg.content[7])
+            	self.RigidBodies[ID] = self.scoobyDoo
 
 
 #    def decodeMessage(self,msg):
@@ -300,7 +301,7 @@ class Control(threading.Thread):
         dp = pj - pi
         dqhat = qjhat - qihat        
         #! Attraction / Repulsion
-        Phi = self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alaph1 + 1) - self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alaph1 + (m.pow(vectorNorm(dqhat,2))/m.pow(self.rigidBodyState.parameters.desDist,2)))
+        Phi = self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + 1) - self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + (m.pow(self.vectorNorm(dqhat),2)/m.pow(self.rigidBodyState.parameters.desDist,2)))
         AR = Phi*dq
         #! Velocity Consensus
         VC = self.rigidBodyState.parameters.beta*dp
@@ -383,7 +384,7 @@ class Control(threading.Thread):
 
 
     def vectorNorm(self,vec):
-        eta = np.sqrt(m.pow(vec[0,0],2) + m.pow(vec[1,0],2) + m.pow(vec[2,0]))
+        eta = np.sqrt(m.pow(vec[0,0],2) + m.pow(vec[1,0],2) + m.pow(vec[2,0],2))
         return eta
 
     
