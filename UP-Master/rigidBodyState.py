@@ -18,9 +18,9 @@ AttThrust = recordtype('AttThrust',['roll','pitch','throttle','yaw'], default = 
 
 InitialPosition = recordtype('InitialPosition',['xo','yo','zo'], default = None)
 
-Parameter = recordtype('Parameter',['Ts','peerTimeout','GPSTimeout','expectedMAVs','isComplete','TargetAltitude','kpx','kdx','kpy','kdy','kpz','kdz','targetAltitude','quadMass','gravity','ku_vel','kv_vel','kw_vel','rollLimit','pitchLimit','throttleLimit','stoppingDistance','desiredSpeed','isTakeoff','intGain','InitPos','isLanding','isHovering','isFlocking','alpha1','alpha2','beta','gamma1','gamma2','desDist'], default = None)
+Parameter = recordtype('Parameter',['Ts','peerTimeout','GPSTimeout','expectedMAVs','isComplete','TargetAltitude','kpx','kdx','kpy','kdy','kpz','kdz','targetAltitude','quadMass','gravity','ku_vel','kv_vel','kw_vel','rollLimit','pitchLimit','throttleLimit','stoppingDistance','desiredSpeed','isTakeoff','intGain','InitPos','isLanding'], default = None)
 
-RigidBodyState = recordtype('RigidBodyState', [('startTime', None),'ID','time','channels',('test',AttThrust()),('attitude',Attitude()),('RCLatch',False),('isGPS',False),'lastGPSContact',('position',Position()),('velocity',Velocity()),('initPos',InitialPosition()),('command',Command()),('parameters',Parameter()),('timeout',Timeout()),('leader',Leader()),('previousState',PreviousState()),'flightSeq'], default = None)
+RigidBodyState = recordtype('RigidBodyState', [('startTime', None),'ID','time','channels',('test',AttThrust()),('attitude',Attitude()),('RCLatch',False),('isGPS',False),'lastGPSContact',('position',Position()),('velocity',Velocity()),('initPos',InitialPosition()),('command',Command()),('parameters',Parameter()),('timeout',Timeout()),('leader',Leader()),('previousState',PreviousState())], default = None)
 
 MessageState = recordtype('MessageState',['ID',('position',Position()),('velocity',Velocity()),('attitude',Attitude())],default = None)
 

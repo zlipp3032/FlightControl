@@ -14,41 +14,41 @@ def vsToCSV(vs):
 #		out+= '1,'
 #	else:
 #		out+= '0,'
-	out+=str(vs.test.roll)+',' # Unscaled commands are put into vs.test 
-	out+=str(vs.test.pitch)+','
-	out+=str(vs.test.throttle)+','
-	out+=str(vs.test.yaw)+','
+	#out+=str(vs.test.roll)+',' # Unscaled commands are put into vs.test 
+	#out+=str(vs.test.pitch)+','
+	#out+=str(vs.test.throttle)+','
+	#out+=str(vs.test.yaw)+','
 	out+=str(vs.velocity.vx)+',' # Measured Velocity
 	out+=str(vs.velocity.vy)+','
 	out+=str(vs.velocity.vz)+','
-	out+=str(vs.attitude.roll)+',' # Measured Attitude
-	out+=str(vs.attitude.pitch)+','
-	out+=str(vs.attitude.yaw)+','
+	#out+=str(vs.attitude.roll)+',' # Measured Attitude
+	#out+=str(vs.attitude.pitch)+','
+	#out+=str(vs.attitude.yaw)+','
 	out+=str(vs.position.x)+',' # Mesaured Postion
 	out+=str(vs.position.y)+','
 	out+=str(vs.position.z)+','
 	#print (vs.position.keys['long])
-	out+=str(vs.leader.qgx)+','
-	out+=str(vs.leader.qgy)+','
-	out+=str(vs.leader.qgz)+','
-	out+=str(vs.channels['1'])+','
-	out+=str(vs.channels['2'])+','
-	out+=str(vs.channels['3'])+','
-	out+=str(vs.channels['4'])+','
-        try:
-		out+=str(vs.command.ux)+','
-		out+=str(vs.command.uy)+','
-        	out+=str(vs.command.uz)+','
-		out+=str(vs.command.vel_est_x)+','
-		out+=str(vs.command.vel_est_y)+','
-		out+=str(vs.command.vel_est_z)+','
-		out+=str(vs.command.Roll)+','
-		out+=str(vs.command.Pitch)+','
-		out+=str(vs.command.Throttle)+','
-		out+=str(vs.command.Yaw)+','
-		out+=str(vs.command.accVelZError)+','
-	except (KeyboardInterrupt, SystemExit): 
-		raise
+	#out+=str(vs.leader.qgx)+','
+	#out+=str(vs.leader.qgy)+','
+	#out+=str(vs.leader.qgz)+','
+	#out+=str(vs.channels['1'])+','
+	#out+=str(vs.channels['2'])+','
+	#out+=str(vs.channels['3'])+','
+	#out+=str(vs.channels['4'])+','
+        #try:
+		#out+=str(vs.command.ux)+','
+		#out+=str(vs.command.uy)+','
+        #out+=str(vs.command.uz)+','
+		#out+=str(vs.command.vel_est_x)+','
+		#out+=str(vs.command.vel_est_y)+','
+		#out+=str(vs.command.vel_est_z)+','
+		#out+=str(vs.command.Roll)+','
+		#out+=str(vs.command.Pitch)+','
+		#out+=str(vs.command.Throttle)+','
+		#out+=str(vs.command.Yaw)+','
+		#out+=str(vs.command.accVelZError)+','
+	#except (KeyboardInterrupt, SystemExit): 
+	#	raise
 	#print out
 	#print (vs.velocity)
 #	out+=str(vs.velocity[0])+','
