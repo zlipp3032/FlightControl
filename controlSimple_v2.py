@@ -81,7 +81,8 @@ class Control(threading.Thread):
     def flocking(self):
         print "flocking"
         if(not self.checkAbort()):
-            self.computeFlockingControl()
+	    self.hover()
+            #self.computeFlockingControl()
 
             
     def takeoff(self):
@@ -112,9 +113,9 @@ class Control(threading.Thread):
         self.vehicle.mode = VehicleMode('STABILIZE')
         #print 'Basic Prearm Checks'
         print 'Arming Motors'
-        #self.vehicle.channels.overrides = {'3':1000}
+        self.vehicle.channels.overrides = {'3':1000}
         time.sleep(2)
-        #self.vehicle.armed = True
+        self.vehicle.armed = True
 
     def computeTakeoffVelocity(self,desDest):
         if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
@@ -134,9 +135,9 @@ class Control(threading.Thread):
             #print self.rigidBodyState.leader
             if(not self.checkAbort()):
                 self.computePDControl()
-                print 'Approaching Landing'
-        elif(self.rigidBodyState.position.z >= self.rigidBodyState.initPos.zo/0.88):
-            #self.vehicle.channels.overrides = {'3':1000}
+                print 'Landing'
+        elif(self.rigidBodyState.position.z >= (self.rigidBodyState.initPos.zo-0.05)):
+            self.vehicle.channels.overrides = {'3':1000}
             self.vehicle.armed = False
             self.rigidBodyState.parameters.isTakeoff = False
 	    print "Vehicle Landed"
@@ -144,7 +145,7 @@ class Control(threading.Thread):
             self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/self.rigidBodyState.parameters.stoppingDistance
             if(not self.checkAbort()):
                 self.computePDControl()
-                print 'Landing'
+                print 'Approaching Landing'
 
 
 #    def updateGlobalStatewithData(self):
@@ -308,8 +309,8 @@ class Control(threading.Thread):
         #! Guidance Term
         kGamma1 = np.matrix([[self.rigidBodyState.parameters.gamma1, 0, 0], [0, self.rigidBodyState.parameters.gamma1, 0], [0, 0, self.rigidBodyState.parameters.gamma1+0.04]])
         kGamma2 = np.matrix([[self.rigidBodyState.parameters.gamma2, 0, 0], [0, self.rigidBodyState.parameters.gamma2, 0], [0, 0, self.rigidBodyState.parameters.gamma2+0.2]])
-        qg = np.matrix([[1],[2],[3]])
-        pg = np.matrix([[0],[0],[0]])
+        qg = np.matrix([[self.rigidBodyState.leader.qgx],[self.rigidBodyState.leader.qgy],[self.rigidBodyState.leader.qgz]])
+        pg = np.matrix([[self.rigidBodyState.leader.pgx],[self.rigidBodyState.leader.pgy],[self.rigidBodyState.leader.pgz]])
         GT = kGamma1*(qg-qi) + kGamma2*(pg-pi)
         #! Flock Correction to Guidance Term
         FC = (1/self.rigidBodyState.parameters.expectedMAVs)*(kGamma1*dq + kGamma2*dp)
@@ -368,7 +369,7 @@ class Control(threading.Thread):
         self.rigidBodyState.command.Pitch = self.saturate(PITCH,1000,2000)
         self.rigidBodyState.command.Throttle = self.saturate(THROTTLE,1000,2000)
         self.rigidBodyState.command.Yaw = self.saturate(YAW,1000,2000)
-        #self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
+        self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
         print self.counter
 
     def antiWindup(self,value,lowLimit,highLimit,accumulator,toAdd):
