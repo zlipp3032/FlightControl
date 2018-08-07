@@ -46,4 +46,6 @@ defaultParams.alpha2 = 0.3
 defaultParams.beta = 0.4
 defaultParams.gamma1 = 0.4
 defaultParams.gamma2 = 0.7
+defaultPArams.gamma3 = 0.44
+defaultParams.gamma4 = 0.9
 defaultParams.desDist = 1.5 # (unit in meters) Desired distance for agents in flock
