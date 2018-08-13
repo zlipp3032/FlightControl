@@ -47,6 +47,9 @@ def vsToCSV(vs):
 		out+=str(vs.command.Throttle)+','
 		out+=str(vs.command.Yaw)+','
 		out+=str(vs.command.accVelZError)+','
+		out+=str(vs.leader.flocking.qgx)+','
+		out+=str(vs.leader.flocking.qgy)+','
+		out+=str(vs.leader.flocking.qgz)+','
 	except (KeyboardInterrupt, SystemExit): 
 		raise
 	#print out

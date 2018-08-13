@@ -50,6 +50,8 @@ class Control(threading.Thread):
             	if(not self.rigidBodyState.parameters.InitPos):
                 	self.rigidBodyState.parameters.InitPos = self.setInitialPos()
                 	self.getLeaderData()
+#			self.setStaticFlockingLeader()
+			self.rigidBodyState.leader.flocking.qgz = -self.rigidBodyState.parameters.targetAltitude
                 	self.rigidBodyState.leader.qgz = -self.rigidBodyState.parameters.targetAltitude
                 	print 'Setting Initial Position'
             	if(self.rigidBodyState.isGPS and True):
@@ -81,8 +83,8 @@ class Control(threading.Thread):
     def flocking(self):
         print "flocking"
         if(not self.checkAbort()):
-	    self.hover()
-            #self.computeFlockingControl()
+	    #self.hover()
+            self.computeFlockingControl()
 
             
     def takeoff(self):
@@ -96,6 +98,7 @@ class Control(threading.Thread):
                 self.rigidBodyState.parameters.isTakeoff = True
                 self.rigidBodyState.parameters.isHovering = True
                 self.getLeaderData()
+		#self.setStaticFlockingLeader()
         else:
             if(self.rigidBodyState.parameters.isHovering):
                 if(not self.checkAbort()):
@@ -171,6 +174,8 @@ class Control(threading.Thread):
         	self.rigidBodyState.velocity.vz = float(msg.content[7])
         	#self.rigidBodyState.attitude.roll = float(msg.content[8])
         	#self.rigidBodyState.attitude.pitch = float(msg.content[9])
+		self.rigidBodyState.leader.flocking.qgx = float(msg.content[8])
+		self.rigidBodyState.leader.flocking.qgy = float(msg.content[9])
         	self.rigidBodyState.attitude.yaw = float(msg.content[10])
             	self.rigidBodyState.flightSeq = int(msg.content[11])
             	self.rigidBodyState.attitude.roll = self.vehicle.attitude.roll
@@ -208,6 +213,17 @@ class Control(threading.Thread):
         self.rigidBodyState.leader.pgx = 0
         self.rigidBodyState.leader.pgy = 0
         self.rigidBodyState.leader.pgz = 0
+
+#    def setStaticFlockingLeader(self):
+#	print 'Set the Flocking Leader at average of the two agent Position!'
+#	self.rigidBodyState.leader.flock.qgx = (self.rigidBodyState.initPos.xo + self.scoobyDoo.position.x)/2
+#	self.rigidBodyState.leader.flock.qgy = (self.rigidBodyState.initPos.yo + self.scoobyDoo.position.y)/2
+#	self.rigidBodyState.leader.flock.qgz = (self.rigidBodyState.position.z + self.scoobyDoo.position.z)/2
+#       self.rigidBodyState.leader.flock.pgx = 0
+#      	self.rigidBodyState.leader.flock.pgy = 0
+#	self.rigidBodyState.leader.flock.pgz = 0
+
+
 
     def setInitialPos(self):
         initPosSet = False
@@ -302,15 +318,15 @@ class Control(threading.Thread):
         dp = pj - pi
         dqhat = qjhat - qihat        
         #! Attraction / Repulsion
-        Phi = self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + 1) - self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + (m.pow(self.vectorNorm(dqhat),2)/m.pow(self.rigidBodyState.parameters.desDist,2)))
+        Phi = self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + 1) - self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + (m.pow(self.vectorNorm(dqhat),2)/m.pow(self.rigidBodyState.parameters.desiredDistance,2)))
         AR = Phi*dq
         #! Velocity Consensus
         VC = self.rigidBodyState.parameters.beta*dp
         #! Guidance Term
-        kGamma1 = np.matrix([[self.rigidBodyState.parameters.gamma1, 0, 0], [0, self.rigidBodyState.parameters.gamma1, 0], [0, 0, self.rigidBodyState.parameters.gamma1+0.04]])
-        kGamma2 = np.matrix([[self.rigidBodyState.parameters.gamma2, 0, 0], [0, self.rigidBodyState.parameters.gamma2, 0], [0, 0, self.rigidBodyState.parameters.gamma2+0.2]])
-        qg = np.matrix([[self.rigidBodyState.leader.qgx],[self.rigidBodyState.leader.qgy],[self.rigidBodyState.leader.qgz]])
-        pg = np.matrix([[self.rigidBodyState.leader.pgx],[self.rigidBodyState.leader.pgy],[self.rigidBodyState.leader.pgz]])
+        kGamma1 = np.matrix([[self.rigidBodyState.parameters.gamma1, 0, 0], [0, self.rigidBodyState.parameters.gamma1, 0], [0, 0, self.rigidBodyState.parameters.gamma3]])
+        kGamma2 = np.matrix([[self.rigidBodyState.parameters.gamma2, 0, 0], [0, self.rigidBodyState.parameters.gamma2, 0], [0, 0, self.rigidBodyState.parameters.gamma4]])
+        qg = np.matrix([[self.rigidBodyState.leader.flocking.qgx],[self.rigidBodyState.leader.flocking.qgy],[self.rigidBodyState.leader.flocking.qgz]])
+        pg = np.matrix([[self.rigidBodyState.leader.flocking.pgx],[self.rigidBodyState.leader.flocking.pgy],[self.rigidBodyState.leader.flocking.pgz]])
         GT = kGamma1*(qg-qi) + kGamma2*(pg-pi)
         #! Flock Correction to Guidance Term
         FC = (1/self.rigidBodyState.parameters.expectedMAVs)*(kGamma1*dq + kGamma2*dp)
