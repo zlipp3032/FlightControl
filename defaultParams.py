@@ -11,10 +11,10 @@ defaultParams.isComplete = True #Ensure the Default parameters were loaded corre
 defaultParams.Ts = 0.05#20Hz
 defaultParams.expectedMAVs = 2 # For indoor experiments, include this agent's "MAV" ---> For outdoor, do not include this agent's "MAV"
 #! PD Controller Gains
-defaultParams.kpx = 0.9
-defaultParams.kdx = 2.0
-defaultParams.kpy = 0.9
-defaultParams.kdy = 2.0
+defaultParams.kpx = 0.6#0.6
+defaultParams.kdx = 1.3#1.3
+defaultParams.kpy = 0.6#0.6
+defaultParams.kdy = 1.3#1.3
 defaultParams.kpz = 0.4#0.09
 defaultParams.kdz = 1.4#0.20
 #! Physical Properties
@@ -42,10 +42,10 @@ defaultParams.isHovering = False
 defaultParams.isFlocking = False
 #! Flocking Controller Gains
 defaultParams.alpha1 = 0.001
-defaultParams.alpha2 = 0.3
+defaultParams.alpha2 = 0.2
 defaultParams.beta = 0.4
-defaultParams.gamma1 = 0.4
-defaultParams.gamma2 = 0.7
-defaultPArams.gamma3 = 0.44
-defaultParams.gamma4 = 0.9
-defaultParams.desDist = 1.5 # (unit in meters) Desired distance for agents in flock
+defaultParams.gamma1 = 0.1#0.08#0.02
+defaultParams.gamma2 = 0.66#0.6#0.22
+defaultParams.gamma3 = 0.16#0.14#0.04
+defaultParams.gamma4 = 0.76#0.7#0.38
+defaultParams.desiredDistance = 1.8#2#1.6 # (unit in meters) Desired distance for agents in flock
