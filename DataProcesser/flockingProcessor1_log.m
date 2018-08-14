@@ -1,4 +1,4 @@
-function u_flock = flockingProcessor2_log(Data,NeighSet,time,leaderPosition)
+function u_flock = flockingProcessor1_log(Data,NeighSet,time,leaderPosition)
 
 %# I am not harrassing Jess!
 Ts = 0.05; % Sample Rate of the code
@@ -15,24 +15,24 @@ u_flock = zeros(3,length(time));
 
 %# Flocking Gains need to match those in the Python script!!!
 alpha1 = 0.001;
-alpha2 = 0.3;
+alpha2 = 0.03;
 beta = 0.4;
 gamma1 = 0.4;
 gamma2 = 0.7;
 gamma3 = 0.44;
 gamma4 = 0.9;
-d = 1.5;
+d = 3.0;
 Ei = 2;
 
 kGamma1 = [gamma1 0 0; 0 gamma1 0; 0 0 gamma3];
 kGamma2 = [gamma2 0 0; 0 gamma2 0; 0 0 gamma4];
 %# Note that the order of subtraction needs to match with the proper
 %# agent!!!
-deltaData = NeighSet(:,:,1) - NeighSet(:,:,2); 
+deltaData = NeighSet(:,:,2) - NeighSet(:,:,1); 
 
 for i = 1:length(time)
     qhati(:,i) = Data(i,1:3,4)' + Ts.*Data(i,1:3,2)';%NeighSet(i,4:6,1) + Ts.*NeighSet(i,1:3,1);
-    qhatj(:,i) = NeighSet(i,4:6,1) + Ts.*NeighSet(i,1:3,1);
+    qhatj(:,i) = NeighSet(i,4:6,2) + Ts.*NeighSet(i,1:3,2);
     dqhat(:,i) = qhatj(:,i) - qhati(:,i);
     qNorm(i) = sqrt((dqhat(1,i))^2 + (dqhat(2,i))^2 + (dqhat(3,i))^2);   
     %# Attraction / Repulsion
@@ -41,31 +41,50 @@ for i = 1:length(time)
     %# Velocity Consensus
     VC(:,i) = beta.*deltaData(i,1:3);
     %# Guidance Term
-    GT(:,i) = kGamma1*(leaderPosition(i,4:6)' - Data(i,1:3,4)') + kGamma2*([0;0;0] - Data(i,1:3,2)');%kGamma1*(Data(i,1:3,5)' - Data(i,1:3,4)') + kGamma2*([0;0;0] - Data(i,1:3,2)');
+    GT(:,i) = kGamma1*(leaderPosition(i,1:3)' - Data(i,1:3,4)') + kGamma2*([0;0;0] - Data(i,1:3,2)');%kGamma1*(Data(i,1:3,5)' - Data(i,1:3,4)') + kGamma2*([0;0;0] - Data(i,1:3,2)');
     %#  Flock Correction to Guidance
-    FC(:,i) = (1/Ei).*kGamma1*deltaData(i,4:6)' + (1/Ei).*kGamma2*deltaData(i,1:3)';
+    FC(:,i) = (1/Ei).*kGamma1*deltaData(i,1:3)' + (1/Ei).*kGamma2*deltaData(i,1:3)';
     %# Compute flocking Control
     u_flock(:,i) = AR(:,i) + VC(:,i) + GT(:,i) - FC(:,i);   
 end
 
 figure()
 subplot(3,1,1)
-plot(time,u_flock(1,:),'r --',time,Data(:,1,7),'b -','linewidth',1.2)
+plot(time,u_flock(1,:),'r --',time,Data(:,1,7),'b -',time,leaderPosition(:,1),'k --','linewidth',1.2)
 title('Flocking Controller Validation')
 xlabel('Time (s)')
 ylabel('X Accel (m/s/s)')
 grid on
 subplot(3,1,2)
-plot(time,u_flock(2,:),'r --',time,Data(:,2,7),'b -','linewidth',1.2)
+plot(time,u_flock(2,:),'r --',time,Data(:,2,7),'b -',time,leaderPosition(:,2),'k --','linewidth',1.2)
 xlabel('Time (s)')
 ylabel('Y Accel (m/s/s)')
 grid on
 subplot(3,1,3)
-plot(time,u_flock(3,:),'r --',time,Data(:,3,7),'b -','linewidth',1.2)
+plot(time,u_flock(3,:),'r --',time,Data(:,3,7),'b -',time,leaderPosition(:,3),'k --','linewidth',1.2)
 xlabel('Time (s)')
 ylabel('Z Accel (m/s/s)')
 grid on
-legend('Flocking','Actual')
+legend('a Posterori','SOLO Script')
+
+figure()
+subplot(3,1,1)
+plot(time,NeighSet(:,4,1),'b',time,NeighSet(:,4,2),'r',time,leaderPosition(:,1),'k --','linewidth',1.2)
+title('Agent Position')
+xlabel('Time (s)')
+ylabel('X Pos (m)')
+grid on
+subplot(3,1,2)
+plot(time,NeighSet(:,5,1),'b',time,NeighSet(:,5,2),'r',time,leaderPosition(:,2),'k --','linewidth',1.2)
+xlabel('Time (s)')
+ylabel('Y Pos (m)')
+grid on
+subplot(3,1,3)
+plot(time,NeighSet(:,6,1),'b',time,NeighSet(:,6,2),'r',time,leaderPosition(:,3),'k --','linewidth',1.2)
+xlabel('Time (s)')
+ylabel('Z Pos (m)')
+grid on
+
 
 % Data(:,1:3,5) is the Leader Data
 

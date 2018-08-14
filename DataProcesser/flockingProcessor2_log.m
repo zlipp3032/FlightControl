@@ -21,7 +21,7 @@ gamma1 = 0.4;
 gamma2 = 0.7;
 gamma3 = 0.44;
 gamma4 = 0.9;
-d = 1.5;
+d = 3.0;
 Ei = 2;
 
 kGamma1 = [gamma1 0 0; 0 gamma1 0; 0 0 gamma3];
@@ -48,24 +48,24 @@ for i = 1:length(time)
     u_flock(:,i) = AR(:,i) + VC(:,i) + GT(:,i) - FC(:,i);   
 end
 
-figure()
-subplot(3,1,1)
-plot(time,u_flock(1,:),'r --',time,Data(:,1,7),'b -','linewidth',1.2)
-title('Flocking Controller Validation')
-xlabel('Time (s)')
-ylabel('X Accel (m/s/s)')
-grid on
-subplot(3,1,2)
-plot(time,u_flock(2,:),'r --',time,Data(:,2,7),'b -','linewidth',1.2)
-xlabel('Time (s)')
-ylabel('Y Accel (m/s/s)')
-grid on
-subplot(3,1,3)
-plot(time,u_flock(3,:),'r --',time,Data(:,3,7),'b -','linewidth',1.2)
-xlabel('Time (s)')
-ylabel('Z Accel (m/s/s)')
-grid on
-legend('Flocking','Actual')
+% figure()
+% subplot(3,1,1)
+% plot(time,u_flock(1,:),'r --',time,Data(:,1,7),'b -','linewidth',1.2)
+% title('Flocking Controller Validation')
+% xlabel('Time (s)')
+% ylabel('X Accel (m/s/s)')
+% grid on
+% subplot(3,1,2)
+% plot(time,u_flock(2,:),'r --',time,Data(:,2,7),'b -','linewidth',1.2)
+% xlabel('Time (s)')
+% ylabel('Y Accel (m/s/s)')
+% grid on
+% subplot(3,1,3)
+% plot(time,u_flock(3,:),'r --',time,Data(:,3,7),'b -','linewidth',1.2)
+% xlabel('Time (s)')
+% ylabel('Z Accel (m/s/s)')
+% grid on
+% legend('Flocking','Actual')
 
 % Data(:,1:3,5) is the Leader Data
 
