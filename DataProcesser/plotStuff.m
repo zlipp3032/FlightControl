@@ -1,11 +1,11 @@
-function plotStuff(rcvData,time)
+function plotStuff(rcvData,time,endFlocking)
 
 int = 'interpreter';
 la = 'latex';
 fsize = 12;
 scale = 100;
 rick = time(1);
-carl = 44; %time(end);
+carl = endFlocking;%time(end);
 
 figure()
 subplot(3,1,1)

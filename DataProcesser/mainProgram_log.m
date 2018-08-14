@@ -4,37 +4,47 @@ clear
 clc
 close all
 
+%! Choose which experiment you would like to analyze
+n = 3;
 
-%% Experiment ---> Experiment_11_7
-% Agent 2 - 192.168.2.1
-% 2018_08_10__16_25_45_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.08, gamma2 = 0.6, gamma3 = 0.14, gamma4 = 0.7
-% 2018_08_10__16_36_11_log ----> same gains as above but change d = 2.0 to d = 1.8
-% 2018_08_10__16_40_59_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.14, gamma2 = 0.7, gamma3 = 0.20, gamma4 = 0.9
-% 2018_08_10__16_47_45_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.3, gamma1 = 0.14, gamma2 = 0.7, gamma3 = 0.20, gamma4 = 0.9
-% 2018_08_10__16_53_06_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.3, gamma1 = 0.1, gamma2 = 0.66, gamma3 = 0.16, gamma4 = 0.76
+%% Experiment ---> Experiment_11_10
+% Agent 1 - 192.168.2.2
+dataPathAg1 = '/Users/zlipp3032/Documents/MastersThesisUAS/Test Results/Experiment_11_10/Agent1/';
+exp11 = '2018_08_14__16_07_12_log';
+exp12 = '2018_08_14__16_11_11_log';
+exp13 = '2018_08_14__16_16_24_log';
 
-% Agent 1 - 192.168.2.2 
-% 2018_08_10__16_24_38_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.08, gamma2 = 0.6, gamma3 = 0.14, gamma4 = 0.7
-% 2018_08_10__16_34_58_log ----> same gains as above but change d = 2.0 to d = 1.8
-% 2018_08_10__16_40_18_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.14, gamma2 = 0.7, gamma3 = 0.20, gamma4 = 0.9
-% 2018_08_10__16_46_32_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.3, gamma1 = 0.14, gamma2 = 0.7, gamma3 = 0.20, gamma4 = 0.9
-% 2018_08_10__16_52_03_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.3, gamma1 = 0.1, gamma2 = 0.66, gamma3 = 0.16, gamma4 = 0.76
+% Agent 2 - 192.168.2.1 
+dataPathAg2 = '/Users/zlipp3032/Documents/MastersThesisUAS/Test Results/Experiment_11_10/Agent2/';
+exp21 = '2018_08_14__16_08_07_log';
+exp22 = '2018_08_14__16_12_21_log';
+exp23 = '2018_08_14__16_17_39_log';
 
-%% Experiment ---> Experiment_11_8
-% Agent 2 - 192.168.2.1
-% 2018_08_13__11_16_59_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.08, gamma2 = 0.6, gamma3 = 0.14, gamma4 = 0.7
-% 2018_08_13__11_21_36_log ----> same gains as above but change d = 2.0 to d = 1.8
-% 2018_08_13__11_30_40_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.14, gamma2 = 0.7, gamma3 = 0.20, gamma4 = 0.9
-
-% Agent 1 - 192.168.2.2 
-% 2018_08_13__11_15_37_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.08, gamma2 = 0.6, gamma3 = 0.14, gamma4 = 0.7
-% 2018_08_13__11_20_22_log ----> same gains as above but change d = 2.0 to d = 1.8
-% 2018_08_13__11_29_25_log ----> alpha1 = 0.001, alpha2 = 0.2, beta = 0.4, gamma1 = 0.14, gamma2 = 0.7, gamma3 = 0.20, gamma4 = 0.9
-
+switch n
+    case 1
+        exp1 = exp11;
+        exp2 = exp21;
+        startFlocking = 5.94;
+        endFlocking = 21.15;
+        d = 1.7;
+    case 2
+        exp1 = exp12;
+        exp2 = exp22;
+        startFlocking = 6.5;
+        endFlocking = 30.28;
+        d = 1.7;
+    case 3
+        exp1 = exp13;
+        exp2 = exp23;
+        startFlocking = 6.44;
+        endFlocking = 42.8;
+        d = 1.7;      
+    otherwise
+        disp('Incorrect Experiment')
+end
 %% Receive and Decode the Data from path ----> 'C:\Users\local_admin\Documents\MATLAB\zsl\Experiment_11_2\Experiment_xx_yy\AgentN\'
 % Data path --> Data received from python script
-% dataPath1 = '/Users/zlipp3032/Documents/MastersThesisUAS/Test Results/Experiment_11_6/Agent1/2018_08_09__16_36_49_log.csv';
-dataPath1 = 'C:\Users\Zack\Desktop\MastersThesisUAS\Flight_Tests\Experiment_11_8\Agent1\2018_08_13__11_20_22_log.csv';
+dataPath1 = [dataPathAg1 exp1 '.csv'];
 [rcvData1,relTime1,NeighSet1] = dataProcessor_log_flock(dataPath1);
 % [rcvDataProcess] = processData(rcvData,relTime);
 
@@ -48,7 +58,7 @@ end
 
 
 % Data path --> Data received from python script
-dataPath2 = 'C:\Users\Zack\Desktop\MastersThesisUAS\Flight_Tests\Experiment_11_8\Agent2\2018_08_13__11_21_36_log.csv';
+dataPath2 = [dataPathAg2 exp2 '.csv'];
 [rcvData2,relTime2,NeighSet2] = dataProcessor_log_flock(dataPath2);
 % [rcvDataProcess] = processData(rcvData,relTime);
 
@@ -91,9 +101,6 @@ end
 
 Leader_Average_Power = 0;
 Agent_Average_Power = 0;
-startFlocking = 9.311;%6.41;%
-endFlocking = 37.41;%28.12;%
-d = 1.8;
 shaggy = find(time1 > startFlocking);
 scooby = find(time1 < endFlocking);
 good_time = scooby(end) - shaggy(1);
@@ -113,8 +120,8 @@ Agent_Average_Power = d - Agent_Average_Power/good_time
 
 
 %% Plot the Single Agent Results
-plotStuff(rcvData1,time1)
-% plotStuff(rcvData2,time2)
+% plotStuff(rcvData1,time1,endFlocking)
+% plotStuff(rcvData2,time2,endFlocking)
 
 
 
@@ -126,7 +133,7 @@ la = 'latex';
 fsize = 12;
 scale = 100;
 rick = time1(1);
-carl = time1(end);
+carl = endFlocking;time1(end);
 
 
 % posError1 = rcvData1(:,:,4) - rcvData1(:,:,5);
@@ -176,15 +183,16 @@ xlim([rick carl])
 legend('Agent 1','Agent 2','Flock Leader')
 grid('on')
 
-d = 1.8.*ones(2,1);
+dVector = d.*ones(2,1);
 t = [time1(1),time1(end)];
 
 figure()
-plot(time1,distAgent1,'b -',t,d,'k --','linewidth',1.2)
+plot(time1,distAgent1,'b -',t,dVector,'k --','linewidth',1.2)
 title('Inter-Agent Distances',int,la,'FontSize',fsize)
 xlabel('Time (s)',int,la,'FontSize',fsize)
 ylabel('Inter-Agent Distance (m)',int,la,'FontSize',fsize)
 xlim([rick carl])
+ylim([0 3])
 legend('Distance','Desired Distance')
 grid('on')
 
@@ -194,6 +202,7 @@ title('Avg Flock Distance to Leader',int,la,'FontSize',fsize)
 xlabel('Time (s)',int,la,'FontSize',fsize)
 ylabel('Distance (m)',int,la,'FontSize',fsize)
 xlim([rick carl])
+ylim([0 1])
 grid('on')
 
 
