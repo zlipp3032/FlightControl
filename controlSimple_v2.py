@@ -116,9 +116,9 @@ class Control(threading.Thread):
         self.vehicle.mode = VehicleMode('STABILIZE')
         #print 'Basic Prearm Checks'
         print 'Arming Motors'
-        self.vehicle.channels.overrides = {'3':1000}
+        #self.vehicle.channels.overrides = {'3':1000}
         time.sleep(2)
-        self.vehicle.armed = True
+        #self.vehicle.armed = True
 
     def computeTakeoffVelocity(self,desDest):
         if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
@@ -140,7 +140,7 @@ class Control(threading.Thread):
                 self.computePDControl()
                 print 'Landing'
         elif(self.rigidBodyState.position.z >= (self.rigidBodyState.initPos.zo-0.05)):
-            self.vehicle.channels.overrides = {'3':1000}
+            #self.vehicle.channels.overrides = {'3':1000}
             self.vehicle.armed = False
             self.rigidBodyState.parameters.isTakeoff = False
 	    print "Vehicle Landed"
@@ -329,10 +329,14 @@ class Control(threading.Thread):
         pg = np.matrix([[self.rigidBodyState.leader.flocking.pgx],[self.rigidBodyState.leader.flocking.pgy],[self.rigidBodyState.leader.flocking.pgz]])
         GT = kGamma1*(qg-qi) + kGamma2*(pg-pi)
         #! Flock Correction to Guidance Term
-        FC = (1/self.rigidBodyState.parameters.expectedMAVs)*(kGamma1*dq + kGamma2*dp)
+        FC = (kGamma1*dq + kGamma2*dp)/self.rigidBodyState.parameters.expectedMAVs
         #! Compute Desired Accelerations
         uk = AR + VC + GT - FC
-        #! Estimate the velocity command using a low pass filter
+        self.rigidBodyState.command.AR = AR[0,0] # For debugging purposes
+ 	self.rigidBodyState.command.VC = VC[0,0] # For debugging purposes
+	self.rigidBodyState.command.GT = GT[0,0] # For debugging purposes
+	self.rigidBodyState.command.FC = FC[0,0] # For debugging purposes
+	#! Estimate the velocity command using a low pass filter
         velGain = 0.1
         pkp = np.matrix([[self.rigidBodyState.previousState.velPrev_x], [self.rigidBodyState.previousState.velPrev_y], [self.rigidBodyState.previousState.velPrev_z]])
         ukp = np.matrix([[self.rigidBodyState.previousState.accPrev_x],[self.rigidBodyState.previousState.accPrev_y],[self.rigidBodyState.previousState.accPrev_z]])
@@ -385,7 +389,7 @@ class Control(threading.Thread):
         self.rigidBodyState.command.Pitch = self.saturate(PITCH,1000,2000)
         self.rigidBodyState.command.Throttle = self.saturate(THROTTLE,1000,2000)
         self.rigidBodyState.command.Yaw = self.saturate(YAW,1000,2000)
-        self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
+        #self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
         print self.counter
 
     def antiWindup(self,value,lowLimit,highLimit,accumulator,toAdd):

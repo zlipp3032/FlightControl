@@ -1,7 +1,7 @@
 from recordtype import recordtype
 
 Timeout = recordtype('Timeout',['localTimeoutTime','GCSLastRx',('peerLastRx',{})],default = None)
-Command = recordtype('Command',['Roll','Pitch','Throttle','Yaw','ux','uy','uz','vel_est_x','vel_est_y','vel_est_z',('accVelZError',0)], default = None)
+Command = recordtype('Command',['Roll','Pitch','Throttle','Yaw','ux','uy','uz','vel_est_x','vel_est_y','vel_est_z',('accVelZError',0),('AR',0),('VC',0),('GT',0),('FC',0)], default = None)
 
 PreviousState = recordtype('PreviousState',[('velPrev_x',0),('velPrev_y',0),('velPrev_z',0),('accPrev_x',0),('accPrev_y',0),('accPrev_z',0)], default = None)
 
