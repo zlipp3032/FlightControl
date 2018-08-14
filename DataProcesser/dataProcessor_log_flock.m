@@ -7,7 +7,7 @@ A = importdata(data);
 
 % Define the points
 relTime = A.data(:,1); %(s) Time stamp since the code was initialized
-Data = zeros(length(relTime),4,10);
+Data = zeros(length(relTime),4,12);
 NeighborSet = zeros(length(relTime),6,2);
 
 % Import the Data
@@ -46,20 +46,24 @@ Data(:,1,10) = A.data(:,33); % z integrator error in velocity
 Data(:,1,11) = A.data(:,34); % Flock leader x direction
 Data(:,2,11) = A.data(:,35); % Flock leader y direction
 Data(:,3,11) = A.data(:,36); % Flock leader z direction
+Data(:,1,12) = A.data(:,37); % Flock leader x direction
+Data(:,2,12) = A.data(:,38); % Flock leader y direction
+Data(:,3,12) = A.data(:,39); % Flock leader z direction
+Data(:,4,12) = A.data(:,40); % Flock leader x direction
 
-NeighborSet(:,1,1) = A.data(:,38); % Agent 1 X Velocity
-NeighborSet(:,2,1) = A.data(:,39); % Agent 1 Y Velocity
-NeighborSet(:,3,1) = A.data(:,40); % Agent 1 Z Velocity
-NeighborSet(:,4,1) = A.data(:,41); % Agent 1 X Position
-NeighborSet(:,5,1) = A.data(:,42); % Agent 1 Y Position
-NeighborSet(:,6,1) = A.data(:,43); % Agent 1 Z Position
+NeighborSet(:,1,1) = A.data(:,42); % Agent 1 X Velocity
+NeighborSet(:,2,1) = A.data(:,43); % Agent 1 Y Velocity
+NeighborSet(:,3,1) = A.data(:,44); % Agent 1 Z Velocity
+NeighborSet(:,4,1) = A.data(:,45); % Agent 1 X Position
+NeighborSet(:,5,1) = A.data(:,46); % Agent 1 Y Position
+NeighborSet(:,6,1) = A.data(:,47); % Agent 1 Z Position
 
-NeighborSet(:,1,2) = A.data(:,46); % Agent 2 X Velocity
-NeighborSet(:,2,2) = A.data(:,47); % Agent 2 Y Velocity
-NeighborSet(:,3,2) = A.data(:,48); % Agent 2 Z Velocity
-NeighborSet(:,4,2) = A.data(:,49); % Agent 2 X Position
-NeighborSet(:,5,2) = A.data(:,50); % Agent 2 Y Position
-NeighborSet(:,6,2) = A.data(:,51); % Agent 2 Z Position
+NeighborSet(:,1,2) = A.data(:,50); % Agent 2 X Velocity
+NeighborSet(:,2,2) = A.data(:,51); % Agent 2 Y Velocity
+NeighborSet(:,3,2) = A.data(:,52); % Agent 2 Z Velocity
+NeighborSet(:,4,2) = A.data(:,53); % Agent 2 X Position
+NeighborSet(:,5,2) = A.data(:,54); % Agent 2 Y Position
+NeighborSet(:,6,2) = A.data(:,55); % Agent 2 Z Position
 
 % scaleTime = max(relTime) - min(relTime);
 
