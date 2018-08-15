@@ -42,10 +42,10 @@ defaultParams.isHovering = False
 defaultParams.isFlocking = False
 #! Flocking Controller Gains
 defaultParams.alpha1 = 0.001
-defaultParams.alpha2 = 0.2
-defaultParams.beta = 0.4
-defaultParams.gamma1 = 0.1#0.08#0.02
-defaultParams.gamma2 = 0.66#0.6#0.22
-defaultParams.gamma3 = 0.16#0.14#0.04
-defaultParams.gamma4 = 0.76#0.7#0.38
+defaultParams.alpha2 = 0.1
+defaultParams.beta = 0.3
+defaultParams.gamma1 = 0.08#0.1#0.08#0.02
+defaultParams.gamma2 = 0.60#0.66#0.6#0.22
+defaultParams.gamma3 = 0.11#0.16#0.14#0.04
+defaultParams.gamma4 = 0.70#0.76#0.7#0.38
 defaultParams.desiredDistance = 1.8#2#1.6 # (unit in meters) Desired distance for agents in flock

@@ -50,6 +50,10 @@ def vsToCSV(vs):
 		out+=str(vs.leader.flocking.qgx)+','
 		out+=str(vs.leader.flocking.qgy)+','
 		out+=str(vs.leader.flocking.qgz)+','
+		out+=str(vs.command.AR)+','
+		out+=str(vs.command.VC)+','
+		out+=str(vs.command.GT)+','
+		out+=str(vs.command.FC)+','
 	except (KeyboardInterrupt, SystemExit): 
 		raise
 	#print out
