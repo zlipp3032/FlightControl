@@ -11,14 +11,14 @@ defaultParams.isComplete = True #Ensure the Default parameters were loaded corre
 defaultParams.Ts = 0.05#20Hz
 defaultParams.expectedMAVs = 2 # For indoor experiments, include this agent's "MAV" ---> For outdoor, do not include this agent's "MAV"
 #! PD Controller Gains
-defaultParams.kpx = 0.6#0.6
-defaultParams.kdx = 1.3#1.3
-defaultParams.kpy = 0.6#0.6
-defaultParams.kdy = 1.3#1.3
-defaultParams.kpz = 0.4#0.09
-defaultParams.kdz = 1.4#0.20
+defaultParams.kpx = 0.2#0.09
+defaultParams.kdx = 0.9#0.61
+defaultParams.kpy = 0.2
+defaultParams.kdy = 0.9
+defaultParams.kpz = 0.1#0.08#0.1#0.1#0.4
+defaultParams.kdz = 0.7#0.60#0.7#0.9#1.4
 #! Physical Properties
-defaultParams.quadMass = 1.2# 1.7 for heavy UP 1.2 for light UP # Value determined experimetnally from scale - Actual SOLO mass is 1.5kg # (units in kg)
+defaultParams.quadMass = 1.65# 1.7 for heavy UP 1.2 for light UP (Note these values are for the current throttle curve for the old props) # Value determined experimetnally from scale - Actual SOLO mass is 1.5kg # (units in kg)
 defaultParams.gravity = 9.81 #units in  m/s/s
 #! Velocity Controller Gains
 defaultParams.ku_vel = 3.5
@@ -42,10 +42,10 @@ defaultParams.isHovering = False
 defaultParams.isFlocking = False
 #! Flocking Controller Gains
 defaultParams.alpha1 = 0.001
-defaultParams.alpha2 = 0.1
-defaultParams.beta = 0.3
-defaultParams.gamma1 = 0.08#0.1#0.08#0.02
-defaultParams.gamma2 = 0.60#0.66#0.6#0.22
-defaultParams.gamma3 = 0.11#0.16#0.14#0.04
-defaultParams.gamma4 = 0.70#0.76#0.7#0.38
-defaultParams.desiredDistance = 1.8#2#1.6 # (unit in meters) Desired distance for agents in flock
+defaultParams.alpha2 = 0.08#0.1
+defaultParams.beta = 0.18#0.3
+defaultParams.gamma1 = 0.02#0.08
+defaultParams.gamma2 = 0.30#0.60
+defaultParams.gamma3 = 0.10#0.10
+defaultParams.gamma4 = 0.65#0.65
+defaultParams.desiredDistance = 1.7#2#1.6 # (unit in meters) Desired distance for agents in flock
