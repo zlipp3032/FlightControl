@@ -13,10 +13,13 @@ defaultParams.expectedMAVs = 2 # For indoor experiments, include this agent's "M
 #! PD Controller Gains
 defaultParams.kpx = 0.2#0.09
 defaultParams.kdx = 0.9#0.61
+defaultParams.kix = 0
 defaultParams.kpy = 0.2
 defaultParams.kdy = 0.9
-defaultParams.kpz = 0.1#0.08#0.1#0.1#0.4
-defaultParams.kdz = 0.7#0.60#0.7#0.9#1.4
+defaultParams.kiy = 0
+defaultParams.kpz = 0.1#0.1#0.1#0.4
+defaultParams.kdz = 1.0#0.7#0.9#1.4
+defaultParams.kiz = 0.01
 #! Physical Properties
 defaultParams.quadMass = 1.65# 1.7 for heavy UP 1.2 for light UP (Note these values are for the current throttle curve for the old props) # Value determined experimetnally from scale - Actual SOLO mass is 1.5kg # (units in kg)
 defaultParams.gravity = 9.81 #units in  m/s/s

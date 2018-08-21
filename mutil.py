@@ -35,6 +35,7 @@ def vsToCSV(vs):
 	out+=str(vs.channels['2'])+','
 	out+=str(vs.channels['3'])+','
 	out+=str(vs.channels['4'])+','
+	out+=str(vs.batt)+','
         try:
 		out+=str(vs.command.ux)+','
 		out+=str(vs.command.uy)+','
@@ -47,6 +48,7 @@ def vsToCSV(vs):
 		out+=str(vs.command.Throttle)+','
 		out+=str(vs.command.Yaw)+','
 		out+=str(vs.command.accVelZError)+','
+		out+=str(vs.command.accPosZError)+','
 		out+=str(vs.leader.flocking.qgx)+','
 		out+=str(vs.leader.flocking.qgy)+','
 		out+=str(vs.leader.flocking.qgz)+','

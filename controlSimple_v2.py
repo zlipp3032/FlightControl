@@ -66,6 +66,7 @@ class Control(threading.Thread):
 
 
     def switch_Flight_Sequence(self):
+	print self.rigidBodyState.batt
         arg = self.rigidBodyState.flightSeq
         flightSequence = {0: self.idleFunction, 1: self.takeoff, 2: self.hover, 3: self.flocking, 4: self.landing}#, 5: self.prepTakeoff}
         Keyboard_Command_Handler = flightSequence.get(arg, lambda: 'Invalid Command')
@@ -109,7 +110,7 @@ class Control(threading.Thread):
 
     def hover(self):
         if(not self.checkAbort()):
-            self.computePDControl()
+            self.computePIDControl()
             print "Hovering"
             
     def prepTakeoff(self):
@@ -124,12 +125,12 @@ class Control(threading.Thread):
         if(abs(desDest) >= self.rigidBodyState.parameters.stoppingDistance):
             self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/abs(desDest)
             if( not self.checkAbort()):
-                self.computePDControl()
+                self.computePIDControl()
                 print 'Taking Off'
         else:
             self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/self.rigidBodyState.parameters.stoppingDistance
             if(not self.checkAbort()):
-                self.computePDControl()
+                self.computePIDControl()
                 print 'Approaching Target Altitude'
 
     def computeLandingVelocity(self,desDest):
@@ -137,7 +138,7 @@ class Control(threading.Thread):
             self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/abs(desDest)
             #print self.rigidBodyState.leader
             if(not self.checkAbort()):
-                self.computePDControl()
+                self.computePIDControl()
                 print 'Landing'
         elif(self.rigidBodyState.position.z >= (self.rigidBodyState.initPos.zo-0.05)):
             self.vehicle.channels.overrides = {'3':1000}
@@ -147,7 +148,7 @@ class Control(threading.Thread):
         else:
             self.rigidBodyState.leader.pgz = (self.rigidBodyState.parameters.desiredSpeed*desDest)/self.rigidBodyState.parameters.stoppingDistance
             if(not self.checkAbort()):
-                self.computePDControl()
+                self.computePIDControl()
                 print 'Approaching Landing'
 
 
@@ -181,6 +182,7 @@ class Control(threading.Thread):
             	self.rigidBodyState.attitude.roll = self.vehicle.attitude.roll
             	self.rigidBodyState.attitude.pitch = self.vehicle.attitude.pitch
             	self.rigidBodyState.channels = self.vehicle.channels
+		self.rigidBodyState.batt = self.vehicle.battery.level
             	self.RigidBodies[int(ID)] = self.rigidBodyState
         else:
             	self.scoobyDoo.ID = ID
@@ -291,13 +293,24 @@ class Control(threading.Thread):
         self.logQueue.put(msg)
 
     def computePIDControl(self):
-        #! Compute the difference vectors
+	#leaderVec = np.matrix([[self.rigidBodyState.leader.qgx],[self.rigidBodyState.leader.qgy],[self.rigidBodyState.leader.qgz]])
+        #accPosError = np.matrix([[self.rigidBodyState.command.accPosXError],[self.rigidBodyState.command.accPosYError],[self.rigidBodyState.command.accPosZError]])
+	#! Compute the difference vectors
         dq = np.matrix([[self.diffFunction(self.rigidBodyState.position.x,self.rigidBodyState.leader.qgx)],[self.diffFunction(self.rigidBodyState.position.y,self.rigidBodyState.leader.qgy)],[self.diffFunction(self.rigidBodyState.position.z,self.rigidBodyState.leader.qgz)]])
         dp = np.matrix([[self.diffFunction(self.rigidBodyState.velocity.vx,self.rigidBodyState.leader.pgx)],[self.diffFunction(self.rigidBodyState.velocity.vy,self.rigidBodyState.leader.pgy)],[self.diffFunction(self.rigidBodyState.velocity.vz,self.rigidBodyState.leader.pgz)]])
-        #! Compute Desired Accelerations
+        #! Integrate the position error
+	intPrep = self.rigidBodyState.parameters.Ts*dq
+	#accPosError = self.antiWindupVec(leaderVec,-10,10,accPosError,intPrep)
+	self.rigidBodyState.command.accPosXError = self.antiWindup(self.rigidBodyState.leader.qgx,-10,10,self.rigidBodyState.command.accPosXError,intPrep[0,0])
+	self.rigidBodyState.command.accPosYError = self.antiWindup(self.rigidBodyState.leader.qgy,-10,10,self.rigidBodyState.command.accPosYError,intPrep[1,0])
+	self.rigidBodyState.command.accPosZError = self.antiWindup(self.rigidBodyState.leader.qgz,-10,10,self.rigidBodyState.command.accPosZError,intPrep[2,0])
+	accPosError = np.matrix([[self.rigidBodyState.command.accPosXError],[self.rigidBodyState.command.accPosYError],[self.rigidBodyState.command.accPosZError]])
+	#print 'accPosError' + str(accPosError) 
+	#! Compute Desired Accelerations
         kp = np.matrix([[self.rigidBodyState.parameters.kpx, 0, 0], [0, self.rigidBodyState.parameters.kpy, 0], [0, 0, self.rigidBodyState.parameters.kpz]])
         kd = np.matrix([[self.rigidBodyState.parameters.kdx, 0, 0], [0, self.rigidBodyState.parameters.kdy, 0], [0, 0, self.rigidBodyState.parameters.kdz]])
-        uk = kp*dq + kd*dp #+ ki*self.antiWindup(self.rigidBodyState.command.vel_est_z,-10,10,self.rigidBodyState.command.accVelZError,accVelError)
+        ki = np.matrix([[self.rigidBodyState.parameters.kix, 0, 0], [0, self.rigidBodyState.parameters.kiy, 0], [0, 0, self.rigidBodyState.parameters.kiz]])
+	uk = kp*dq + kd*dp + ki*accPosError
         #! Estimate the velocity command using a low pass filter
         velGain = 0.1
         pkp = np.matrix([[self.rigidBodyState.previousState.velPrev_x], [self.rigidBodyState.previousState.velPrev_y], [self.rigidBodyState.previousState.velPrev_z]])
@@ -384,7 +397,7 @@ class Control(threading.Thread):
         ROLL =  1500 + (500/self.rigidBodyState.parameters.rollLimit)*self.rigidBodyState.test.roll
         PITCH = 1500 + (500/self.rigidBodyState.parameters.pitchLimit)*self.rigidBodyState.test.pitch
         #THROTTLE = 1000 + 32.254*self.rigidBodyState.test.throttle - 0.257*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#972 + 48.484*self.rigidBodyState.test.throttle + 1.3241*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#
-        #THROTTLE =  1000 - 1.2193*self.rigidBodyState.test.throttle + 0.9984*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#1000 + 0.7427*self.rigidBodyState.test.throttle + 0.9136*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
+        #THROTTLE =  1000 + 1.8573*self.rigidBodyState.test.throttle + 0.9664*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#1000 + 0.7427*self.rigidBodyState.test.throttle + 0.9136*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
 	THROTTLE =  1000 + 2.5525*self.rigidBodyState.test.throttle + 0.9157*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
 	#THROTTLE =  1000 + 5.5202*self.rigidBodyState.test.throttle + 0.9849*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
 	YAW = self.rigidBodyState.attitude.yaw
@@ -394,18 +407,35 @@ class Control(threading.Thread):
         self.rigidBodyState.command.Throttle = self.saturate(THROTTLE,1000,2000)
         self.rigidBodyState.command.Yaw = self.saturate(YAW,1000,2000)
         self.vehicle.channels.overrides = {'1': self.rigidBodyState.command.Roll,'2': self.rigidBodyState.command.Pitch,'3': self.rigidBodyState.command.Throttle}
-        print self.counter
+        #print self.rigidBodyState.batt
+	print self.counter
 
     def antiWindup(self,value,lowLimit,highLimit,accumulator,toAdd):
         if(value>=highLimit): #Saturation and anti-windup
             if(toAdd < 0):
                 accumulator = accumulator + toAdd
-        if(value<=lowLimit):
+        elif(value<=lowLimit):
             if(toAdd > 0):
                 accumulator = accumulator + toAdd		
         else:
             accumulator = accumulator + toAdd
         return accumulator
+
+    def antiWindupVec(self,value,lowLimit,highLimit,accumulator,toAdd):
+	print 'toAdd' + str(toAdd)
+	print 'value' + str(value)
+	print 'accumulator' + str(accumulator)
+	for i in range(0,len(toAdd)):
+		if(value[i] >= highLimit):
+			if(toAdd[i] < 0):
+				accumulator[i] = accumulator[i] + toAdd[i]
+		if(value[i] <= lowLimit):
+			if(toAdd[i] > 0):
+				accumulator[i] = accumulator[i] + toAdd[i]
+		else:
+			accumulator[i] = accumulator[i] + toAdd[i]
+	return accumulator
+
 
 
     def vectorNorm(self,vec):
