@@ -1,11 +1,11 @@
-function plotStuff(rcvData,time,endFlocking)
+function plotStuff(rcvData,time)
 
 int = 'interpreter';
 la = 'latex';
 fsize = 12;
 scale = 100;
 rick = time(1);
-carl = endFlocking;%time(end);
+carl = time(end);
 
 figure()
 subplot(3,1,1)
@@ -119,13 +119,24 @@ xlim([rick carl])
 grid('on')
 
 figure()
+subplot(3,1,1)
 plot(time,rcvData(:,1,10),'linewidth',1.2)
 xlabel('Time (s)',int,la,'FontSize',fsize)
-ylabel('Integrator Term (m/s/s)',int,la,'FontSize',fsize)
+ylabel('Vel Int Term (m/s)',int,la,'FontSize',fsize)
 xlim([rick carl])
 grid('on')
-
-
+subplot(3,1,2)
+plot(time,rcvData(:,2,10),'linewidth',1.2)
+xlabel('Time (s)',int,la,'FontSize',fsize)
+ylabel('Pos Int Term (m)',int,la,'FontSize',fsize)
+xlim([rick carl])
+grid('on')
+subplot(3,1,3)
+plot(time,rcvData(:,3,10),'linewidth',1.2)
+xlabel('Time (s)',int,la,'FontSize',fsize)
+ylabel('Batt Percent',int,la,'FontSize',fsize)
+xlim([rick carl])
+grid('on')
 
 
 end
