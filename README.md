@@ -8,4 +8,7 @@ Control method used is a PID controller on a virtual leader for the single agent
 # Main Functions
 main.py implements a control algorithm that uses vehicle.channel.overrides{} to send {ROLL,PITCH,THROTTLE,YAW} commands to the PX4-cube flight controller using the --connect method --> This program runs but has not been tested for proper copter control.
 
+The current model uses thrust curve that is not reflective but its being tuned for the MAS high performance props for the SOLO (the stock thrust curve is in the code but is not clearly defined)
+
+When the thrust curve is correct:
 The takeoff, hover, and landing sequences have been tested and verified. The flocking sequence is currently being tested.
