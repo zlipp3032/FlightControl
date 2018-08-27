@@ -1,4 +1,4 @@
-function [Data,relTime,NeighborSet] = dataProcessor_log(data)
+function [Data,relTime,NeighborSet] = dataProcessor_log_flock(data)
 % data = '/Users/zlipp3032/Documents/MastersThesisUAS/Code/ComTests/Control/junk/2018_01_12__23_10_12_log.csv';
 
 % Import data from specified path
@@ -32,7 +32,7 @@ Data(:,1,6) = A.data(:,19); % Actual Roll PWM
 Data(:,2,6) = A.data(:,20); % Actual Pitch PWM
 Data(:,3,6) = A.data(:,21); % Actual Throttle PWM
 Data(:,4,6) = A.data(:,22); % Actual Yaw PWM
-Data(:,3,10) = A.data(:,23); % Battery Level (%)
+Data(:,3,10) = A.data(:,23); % Battery Level (voltage)
 Data(:,1,7) = A.data(:,24); % PD X Acceleration
 Data(:,2,7) = A.data(:,25); % PD Y Acceleration
 Data(:,3,7) = A.data(:,26); % PD Z Acceleration
