@@ -66,7 +66,7 @@ class Control(threading.Thread):
 
 
     def switch_Flight_Sequence(self):
-	print self.rigidBodyState.batt
+	#print self.rigidBodyState.batt
         arg = self.rigidBodyState.flightSeq
         flightSequence = {0: self.idleFunction, 1: self.takeoff, 2: self.hover, 3: self.flocking, 4: self.landing}#, 5: self.prepTakeoff}
         Keyboard_Command_Handler = flightSequence.get(arg, lambda: 'Invalid Command')
@@ -182,7 +182,7 @@ class Control(threading.Thread):
             	self.rigidBodyState.attitude.roll = self.vehicle.attitude.roll
             	self.rigidBodyState.attitude.pitch = self.vehicle.attitude.pitch
             	self.rigidBodyState.channels = self.vehicle.channels
-		self.rigidBodyState.batt = self.vehicle.battery.level
+		self.rigidBodyState.batt = self.vehicle.battery.voltage
             	self.RigidBodies[int(ID)] = self.rigidBodyState
         else:
             	self.scoobyDoo.ID = ID
@@ -319,30 +319,39 @@ class Control(threading.Thread):
         self.updateControlState(uk,pk)
 
     def computeFlockingControl(self):
-        #! Set Position Vectors and Estimate Next State
-        qi = np.matrix([[self.rigidBodyState.position.x],[self.rigidBodyState.position.y],[self.rigidBodyState.position.z]])
-        pi = np.matrix([[self.rigidBodyState.velocity.vx],[self.rigidBodyState.velocity.vy],[self.rigidBodyState.velocity.vz]])
-        qihat = qi + self.rigidBodyState.parameters.Ts*pi
-        qj = np.matrix([[self.scoobyDoo.position.x],[self.scoobyDoo.position.y],[self.scoobyDoo.position.z]])
-        pj = np.matrix([[self.scoobyDoo.velocity.vx],[self.scoobyDoo.velocity.vy],[self.scoobyDoo.velocity.vz]])
-        qjhat = qj + self.rigidBodyState.parameters.Ts*pj
-        #! Difference Functions
-        dq = qj - qi
-        dp = pj - pi
-        dqhat = qjhat - qihat        
-        #! Attraction / Repulsion
-        Phi = self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + 1) - self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + (m.pow(self.vectorNorm(dqhat),2)/m.pow(self.rigidBodyState.parameters.desiredDistance,2)))
-        AR = Phi*dq
-        #! Velocity Consensus
-        VC = self.rigidBodyState.parameters.beta*dp
-        #! Guidance Term
+	#! Set Position Vectors and Estimate Next State
+       	qi = np.matrix([[self.rigidBodyState.position.x],[self.rigidBodyState.position.y],[self.rigidBodyState.position.z]])
+       	pi = np.matrix([[self.rigidBodyState.velocity.vx],[self.rigidBodyState.velocity.vy],[self.rigidBodyState.velocity.vz]])
+        AR = np.matrix([[0],[0],[0]])
+	VC = np.matrix([[0],[0],[0]])
+	FC = np.matrix([[0],[0],[0]])
         kGamma1 = np.matrix([[self.rigidBodyState.parameters.gamma1, 0, 0], [0, self.rigidBodyState.parameters.gamma1, 0], [0, 0, self.rigidBodyState.parameters.gamma3]])
         kGamma2 = np.matrix([[self.rigidBodyState.parameters.gamma2, 0, 0], [0, self.rigidBodyState.parameters.gamma2, 0], [0, 0, self.rigidBodyState.parameters.gamma4]])
+	if (self.scoobyDoo.position.x):
+		print('hello')
+		qihat = qi + self.rigidBodyState.parameters.Ts*pi
+        	qj = np.matrix([[self.scoobyDoo.position.x],[self.scoobyDoo.position.y],[self.scoobyDoo.position.z]])
+        	pj = np.matrix([[self.scoobyDoo.velocity.vx],[self.scoobyDoo.velocity.vy],[self.scoobyDoo.velocity.vz]])
+        	qjhat = qj + self.rigidBodyState.parameters.Ts*pj
+        	#! Difference Functions
+        	dq = qj - qi
+        	dp = pj - pi
+        	dqhat = qjhat - qihat        
+        	#! Attraction / Repulsion
+        	Phi = self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + 1) - self.rigidBodyState.parameters.alpha2/(self.rigidBodyState.parameters.alpha1 + (m.pow(self.vectorNorm(dqhat),2)/m.pow(self.rigidBodyState.parameters.desiredDistance,2)))
+        	AR = np.matrix([[Phi, 0, 0], [0, Phi, 0], [0, 0, Phi]])*dq #Phi*dq
+        	#! Velocity Consensus
+        	VC = self.rigidBodyState.parameters.beta*dp
+                #! Flock Correction to Guidance Term
+	        FC = (kGamma1*dq + kGamma2*dp)/self.rigidBodyState.parameters.expectedMAVs
+	else:
+		print('goodbye')
+	#! Guidance Term
+        #kGamma1 = np.matrix([[self.rigidBodyState.parameters.gamma1, 0, 0], [0, self.rigidBodyState.parameters.gamma1, 0], [0, 0, self.rigidBodyState.parameters.gamma3]])
+        #kGamma2 = np.matrix([[self.rigidBodyState.parameters.gamma2, 0, 0], [0, self.rigidBodyState.parameters.gamma2, 0], [0, 0, self.rigidBodyState.parameters.gamma4]])
         qg = np.matrix([[self.rigidBodyState.leader.flocking.qgx],[self.rigidBodyState.leader.flocking.qgy],[self.rigidBodyState.leader.flocking.qgz]])
         pg = np.matrix([[self.rigidBodyState.leader.flocking.pgx],[self.rigidBodyState.leader.flocking.pgy],[self.rigidBodyState.leader.flocking.pgz]])
         GT = kGamma1*(qg-qi) + kGamma2*(pg-pi)
-        #! Flock Correction to Guidance Term
-        FC = (kGamma1*dq + kGamma2*dp)/self.rigidBodyState.parameters.expectedMAVs
         #! Compute Desired Accelerations
         uk = AR + VC + GT - FC
         self.rigidBodyState.command.AR = AR[0,0] # For debugging purposes
@@ -393,13 +402,17 @@ class Control(threading.Thread):
 
 
     def scaleAndSendControl(self):
+	y = self.rigidBodyState.test.throttle
+	x = self.vehicle.battery.voltage
         #! Scale the compute control values to match the format used in vehicle.channel.overrides{}
         ROLL =  1500 + (500/self.rigidBodyState.parameters.rollLimit)*self.rigidBodyState.test.roll
         PITCH = 1500 + (500/self.rigidBodyState.parameters.pitchLimit)*self.rigidBodyState.test.pitch
-        #THROTTLE = 1000 + 32.254*self.rigidBodyState.test.throttle - 0.257*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#972 + 48.484*self.rigidBodyState.test.throttle + 1.3241*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#
+        #! Stock 3DR SOLO Propeller Scaling ---> These need to be fixed
+	#THROTTLE = 1000 + 32.254*self.rigidBodyState.test.throttle - 0.257*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#972 + 48.484*self.rigidBodyState.test.throttle + 1.3241*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#
         #THROTTLE =  1000 + 1.8573*self.rigidBodyState.test.throttle + 0.9664*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle#1000 + 0.7427*self.rigidBodyState.test.throttle + 0.9136*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
-	THROTTLE =  1000 + 2.5525*self.rigidBodyState.test.throttle + 0.9157*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
-	#THROTTLE =  1000 + 5.5202*self.rigidBodyState.test.throttle + 0.9849*self.rigidBodyState.test.throttle*self.rigidBodyState.test.throttle
+	#! Master Air Screw Propeller Scaling functions
+	# (with strap mount) THROTTLE = 1000*(1+(y-3.779)/(0.2238*(x*x-25.82))) # R^2 = 0.9897
+	THROTTLE = 1000*(1+(y-4.869)/(0.2067*(x*x-23.71))) # R^2 = 0.97
 	YAW = self.rigidBodyState.attitude.yaw
         #! Saturate to keep commands in range of input values
         self.rigidBodyState.command.Roll = self.saturate(ROLL,1000,2000)
