@@ -22,7 +22,6 @@ expectedMAVs = 1
 logPath = '/home/zsl/Desktop/multiFlightProgram/Data'
 #broadcastIP = '192.168.0.255' #Will be necessary when we introduce multiple agents
 #transmitAddr = (broadcastIP,Port)
-d = 500
 
 startTime = datetime.now()
 
@@ -54,7 +53,7 @@ if not connection_string:
 print '\nConnecting to vehicle on: %s' % connection_string
 vehicle = connect(connection_string, wait_ready = True, baud=115200, rate=10) #230400 or 115000 or 250000)
 
-receiveThread = receiveClass_v5.Receiver(receiveQueue,localIP,Port,bufferLength,d)
+receiveThread = receiveClass_v5.Receiver(receiveQueue,localIP,Port,bufferLength)
 logThread = loggingClass.Logging(logQueue,logPath,expectedMAVs,startTime)
 controlThread = controlSimple_v2.Control(logQueue,receiveQueue,startTime,localIP,defaultParams,vehicle)
 
