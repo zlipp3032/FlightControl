@@ -94,9 +94,13 @@ class FullVehicleState(BasicVehicleState):
         self.time = 0.00
         self.leader = {'qgx': None, 'qgy': None, 'qgz': None, 'pgx': 0.0, 'pgy': 0.0, 'pgz': 0.0,
                            'qgx_prev': None, 'qgy_prev': None, 'qgz_prev': None, 'pgx_prev': 0.0, 'pgy_prev': 0.0, 'pgz_prev': 0.0}
-        self.attitude = {'roll': None, 'pitch': None, 'yaw': None}
+        self.attitude = {'roll': 0.0, 'pitch': 0.0, 'yaw': None}
         self.initPos = {'x': None, 'y': None, 'z': None}
+        self.accumulator = {'intXPosError': 0.0, 'intYPosError': 0.0, 'intZPosError': 0.0, 'intZVelError': 0.0}
+        self.controlState = {'vx_des': 0.0, 'vy_des': 0.0, 'vz_des': 0.0, 'ux_des': 0.0, 'uy_des': 0.0, 'uz_des': 0.0,
+                                 'thrust': 0.0, 'roll': 0.0, 'pitch': 0.0, 'roll_PWM': None, 'pitch_PWM': None,'throttle_PWM': None}
         self.flightSeq = 0
+        self.hover = {'x': None, 'y': None, 'z': None}
         #self.isFlocking = False
         
     def getCSVLists(self):
@@ -116,7 +120,20 @@ class FullVehicleState(BasicVehicleState):
         headers += ['flightSequence']
         values += [self.flightSeq]
 
-        
+        headers += ['xhover', 'yhover', 'zhover']
+        values += [self.hover['x'], self.hover['y'],self.hover['z']]
+
+        headers += ['intXPosError','intYPosError','intZPosError','intZVelError']
+        values += [self.accumulator['intXPosError'], self.accumulator['intYPosError'],self.accumulator['intZPosError'],self.accumulator['intZVelError']]
+
+        headers += ['vx_des','vy_des','vz_des','ux','uy','uz']
+        values += [self.controlState['vx_des'], self.controlState['vy_des'], self.controlState['vz_des'], self.controlState['ux_des'], self.controlState['uy_des'], self.controlState['uz_des']]  
+
+        headers += ['thrust_des','roll_des','pitch_des']
+        values += [self.controlState['thrust'], self.controlState['roll'], self.controlState['pitch']]
+
+        headers += ['tPWM_des','rPWM_des','pPWM_des']
+        values += [self.controlState['throttle_PWM'], self.controlState['roll_PWM'], self.controlState['pitch_PWM']]
                        
 
         out = OrderedDict(zip(headers,values))

@@ -8,12 +8,12 @@ def getParams():
     defaultParams = Parameter()
     defaultParams.receivedTime = time.time()
     defaultParams.Ts = 0.05
-    defaultParams.expectedMAVs = 2
+    defaultParams.expectedMAVs = 3
     defaultParams.isComplete = True
     defaultParams.GPSTimeout = 1.0
     defaultParams.txStateType = 'basic'
     #defaultParams.desiredPosition = np.array([[-1],[-0.5],[0]])
-    defaultParams.gains = {'intGain': 0.5, 'leadVelGain': 0.0,
+    defaultParams.gains = {'intGain': 0.5, 'leadVelGain': 0.0, 'velGain': 0.1,
                            'kpx': 0.3, 'kdx': 1.2, 'kix': 0,
                            'kpy': 0.3, 'kdy': 1.2, 'kiy': 0,
                            'kpz': 0.3, 'kdz': 1.3, 'kiz': 0,
@@ -36,7 +36,8 @@ def getParams():
                             'isLanding': False,
                             'isHovering': False,
                             'isFlocking': False,
-                            'ignoreSelfPackets': False
+                            'ignoreSelfPackets': False,
+                            'hoverVel': True
                             }
         
     
